@@ -1,6 +1,5 @@
 ﻿# Projet-VISIO
 # Plateforme intelligente de suivi des poubelles par image pour la prévention des dépôts sauvages
-## -	Solution Delivery pour masterCamp Data   –
 ## Contexte :
 <p align="justify">
 Face au manque de données précises sur les déchets dits abandonnés et à l’urgence d’agir pour limiter leur prolifération, le projet Wild Dump Prevention (WDP) propose une approche innovante visant à dresser un état des lieux aussi exhaustif que possible de la problématique des déchets sauvages. S’appuyant sur la démarche AI for Good, WDP vise non seulement à cartographier les dépôts existants, mais surtout à anticiper l’apparition de nouveaux sites de dépôt, en se concentrant notamment sur les zones où les poubelles débordent fréquemment, car elles deviennent souvent des points de départ de dépôts sauvages.
