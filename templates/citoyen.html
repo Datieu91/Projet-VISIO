@@ -1,90 +1,81 @@
-<!DOCTYPE html>
-<html lang="fr" data-bs-theme="light">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>WDP - Signalement Citoyen</title>
-  
-  <script>
-    const setDeviceTheme = () => {
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
-    };
-    setDeviceTheme();
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setDeviceTheme);
-  </script>
+{% extends "base.html" %}
+{% block title %}Signalement citoyen · WDP SaaS{% endblock %}
+{% block content %}
+<header class="topbar">
+  <div>
+    <p class="section-label">Signalement citoyen</p>
+    <h1>Créer un signalement</h1>
+  </div>
+  <div class="top-metrics">
+    <div><span id="citizenStatus">Prêt</span><small>État</small></div>
+    <div><span>Green IT</span><small>Compression</small></div>
+  </div>
+</header>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/citoyen.css') }}">
-</head>
-<body class="overflow-hidden vh-100 d-flex flex-column">
+<section class="citizen-layout">
+  <article class="panel report-panel">
+    <form id="uploadForm">
+      <label class="camera-drop" for="imageInput">
+        <span class="camera-icon">📷</span>
+        <strong>Ouvrir l’appareil photo</strong>
+        <small>ou choisir une image JPG, PNG, WEBP · max 5 Mo</small>
+      </label>
+      <input id="imageInput" name="image" type="file" accept="image/*" capture="environment" hidden required>
 
-  <header class="app-header d-flex justify-content-between align-items-center p-3 border-bottom z-3">
-    <div class="logo fw-bold text-success d-flex align-items-center gap-2">
-      🌱 WDP <span class="badge text-bg-success bg-opacity-25 text-success">Mode Éco</span>
-    </div>
-  </header>
+      <img id="preview" class="preview-img" alt="Aperçu image" hidden>
 
-  <main class="flex-grow-1 position-relative d-flex flex-column p-4 workspace-bg">
-    
-    <section id="state-initial" class="state active flex-column flex-grow-1">
-      <div class="mb-4 mt-2">
-        <h1 class="h2 fw-bold mb-2">Gardons notre ville propre.</h1>
-        <p class="text-secondary">Prenez en photo une poubelle qui déborde pour alerter les services.</p>
+      <div class="meta-grid">
+        <div class="meta-item"><small>Localisation</small><strong id="gpsStatus">Recherche GPS…</strong></div>
+        <div class="meta-item"><small>Poids initial</small><strong id="sizeOriginal">--</strong></div>
+        <div class="meta-item"><small>Image envoyée</small><strong id="sizeOptimized">--</strong></div>
       </div>
-      <div class="camera-container flex-grow-1 d-flex flex-column justify-content-center align-items-center border border-2 border-secondary border-dashed rounded-4 p-5 text-center" onclick="document.getElementById('camera-input').click()" style="cursor: pointer;">
-        <span class="fs-1 mb-3">📸</span>
-        <span class="fw-bold text-success fs-5">Ouvrir l'appareil photo</span>
-        <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
-      </div>
-    </section>
 
-    <section id="state-processing" class="state flex-column flex-grow-1 justify-content-center align-items-center text-center d-none">
-      <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
-      <h3 id="loading-text">Traitement sécurisé...</h3>
-    </section>
-
-    <section id="state-preview" class="state flex-column flex-grow-1 d-none">
-      <div class="border rounded-4 overflow-hidden mb-4 shadow-sm">
-        <img id="image-preview" src="" alt="Aperçu" class="w-100 object-fit-cover" style="height: 250px;">
-        <div class="p-3 border-top">
-          <div class="d-flex justify-content-between">
-            <span class="text-secondary">📍 Localisation GPS</span>
-            <span class="fw-bold text-success" id="location-value">Recherche...</span>
-          </div>
+      <section class="map-card citizen-map-card">
+        <div class="panel-head compact">
+          <h2>Localisation du signalement</h2>
+          <small id="mapHelp">Déplace le marqueur ou clique sur la carte pour corriger la position.</small>
         </div>
+        <div id="citizenMap" class="leaflet-map citizen-map" aria-label="Carte de localisation du signalement"></div>
+      </section>
+
+      <fieldset class="tag-box">
+        <legend>Tags citoyen</legend>
+        <label><input type="checkbox" value="encombrants"> Encombrants</label>
+        <label><input type="checkbox" value="dangereux"> ⚠️ Dangereux</label>
+        <label><input type="checkbox" value="odeur"> Odeur</label>
+        <label><input type="checkbox" value="recyclage"> ♻️ Recyclage</label>
+      </fieldset>
+
+      <div class="action-row">
+        <button type="button" class="btn muted" id="resetButton">Refaire</button>
+        <button type="submit" class="btn success" id="sendButton">Envoyer le signalement</button>
       </div>
+    </form>
+  </article>
 
-      <div class="mb-4">
-        <h4 class="h6 text-secondary mb-2">Précisions optionnelles :</h4>
-        <div class="d-flex flex-wrap gap-2">
-          <div class="chip badge border text-body fw-normal p-2 px-3" style="cursor: pointer;" onclick="this.classList.toggle('bg-success'); this.classList.toggle('text-white');">🪑 Encombrants</div>
-          <div class="chip badge border text-body fw-normal p-2 px-3" style="cursor: pointer;" onclick="this.classList.toggle('bg-success'); this.classList.toggle('text-white');">⚠️ Dangereux</div>
-          <div class="chip badge border text-body fw-normal p-2 px-3" style="cursor: pointer;" onclick="this.classList.toggle('bg-success'); this.classList.toggle('text-white');">👃 Odeur</div>
-        </div>
-      </div>
+  <aside class="panel project-card">
+    <h2>GreenBin / VISIO</h2>
+    <p>Cette interface envoie une image au backend Flask. Le serveur sauvegarde le fichier, extrait les caractéristiques visuelles, applique des règles de classification et calcule un score de risque.</p>
+    <ul class="feature-list">
+      <li>Upload sécurisé</li>
+      <li>GPS et tags citoyen</li>
+      <li>Extraction : taille, couleur, contraste</li>
+      <li>Prédiction : Vide, Pleine, Débordante</li>
+      <li>Score de risque 0–100</li>
+    </ul>
+    <a class="btn ghost full" href="{{ url_for('agent_app') }}">Aller à la modération</a>
+  </aside>
+</section>
 
-      <div class="mt-auto d-flex gap-3">
-        <button class="btn btn-outline-secondary w-50 py-3 rounded-3 fw-bold" onclick="resetApp()">Refaire</button>
-        <button class="btn btn-success w-50 py-3 rounded-3 fw-bold" onclick="submitReport()" id="btn-submit" disabled>Envoyer</button>
-      </div>
-    </section>
-
-    <section id="state-success" class="state flex-column flex-grow-1 justify-content-center align-items-center text-center d-none">
-      <div class="fs-1 mb-3">✅</div>
-      <h2 class="mb-2">Merci !</h2>
-      <p class="text-secondary mb-4">Signalement transmis aux agents.</p>
-      <div class="badge bg-primary bg-opacity-10 text-primary border border-primary p-2 px-3 rounded-pill mb-5 fs-6" id="gamification-text">
-        ⭐ C'est votre 1er signalement !
-      </div>
-      <button class="btn btn-success w-100 py-3 rounded-3 fw-bold mb-4" onclick="resetApp()">Nouveau signalement</button>
-      <p class="small text-secondary opacity-75" id="subtle-eco-text">✨ Image compressée • Démarche éco-responsable</p>
-    </section>
-
-  </main>
-
-  <canvas id="compression-canvas" hidden></canvas>
-  <script src="{{ url_for('static', filename='js/citoyen.js') }}"></script>
-</body>
-</html>
+<section id="resultCard" class="panel result-card" hidden>
+  <h2>✅ Signalement transmis</h2>
+  <div id="resultContent"></div>
+  <div class="action-row compact-actions">
+    <a class="btn muted" href="{{ url_for('agent_app') }}">Voir côté agent</a>
+    <a class="btn success" href="{{ url_for('dashboard_app') }}">Voir dashboard</a>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/citoyen.js') }}"></script>
+{% endblock %}

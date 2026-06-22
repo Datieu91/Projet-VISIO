@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · WDP SaaS{% endblock %}
+{% block content %}
+<header class="topbar dashboard-topbar">
+  <h1>Dashboard</h1>
+  <div class="top-metrics">
+    <div>
+      <small>Images en attente</small>
+      <span id="topPending">0</span>
+    </div>
+    <div>
+      <small>Cadence moyenne</small>
+      <span id="topCadence">-- s</span>
+    </div>
+  </div>
+</header>
+
+<section class="legacy-dashboard">
+  <div class="legacy-kpis">
+    <article class="legacy-card">
+      <p>Signalements totaux (semaine)</p>
+      <strong id="weeklyTotal">0</strong>
+      <small class="positive">↗ +12%</small>
+    </article>
+
+    <article class="legacy-card">
+      <p>Taux de “poubelle pleine”</p>
+      <strong id="fullRate" class="danger-text">0%</strong>
+      <small>Basé sur les validations agent</small>
+    </article>
+
+    <article class="legacy-card">
+      <p>Temps de traitement moyen</p>
+      <strong id="avgProcessingTime" class="success-text">-- s</strong>
+      <small class="positive">↘ -0.4s</small>
+    </article>
+  </div>
+
+  <div class="legacy-main-grid">
+    <article class="legacy-card chart-card">
+      <div class="panel-head compact">
+        <h2>Évolution des signalements</h2>
+        <button id="refreshButton" class="btn muted small">Rafraîchir</button>
+      </div>
+      <div class="chart-legend">
+        <span class="legend full"></span> Poubelles Pleines
+        <span class="legend empty"></span> Poubelles Vides/Ok
+      </div>
+      <canvas id="signalementsChart" height="260"></canvas>
+    </article>
+
+    <article class="legacy-card heatmap-card">
+      <div class="panel-head compact">
+        <h2>Carte des zones à risque</h2>
+        <button id="refreshMapButton" class="btn muted small">Recharger carte</button>
+      </div>
+      <div id="dashboardMap" class="leaflet-map dashboard-map" aria-label="Carte des signalements géolocalisés"></div>
+      <div class="map-legend">
+        <span><i class="legend-dot pending"></i> En attente</span>
+        <span><i class="legend-dot low"></i> Risque faible</span>
+        <span><i class="legend-dot medium"></i> Risque moyen</span>
+        <span><i class="legend-dot high"></i> Risque élevé</span>
+      </div>
+    </article>
+  </div>
+
+  <div class="legacy-secondary-grid">
+    <article class="legacy-card mini-panel">
+      <h2>Répartition automatique</h2>
+      <div class="progress-row"><span>Vide</span><div class="progress"><i id="barEmpty"></i></div><strong id="emptyCount">0</strong></div>
+      <div class="progress-row"><span>Pleine</span><div class="progress"><i id="barFull"></i></div><strong id="fullCount">0</strong></div>
+      <div class="progress-row"><span>Risque élevé</span><div class="progress"><i id="barHighRisk"></i></div><strong id="highRiskCount">0</strong></div>
+    </article>
+
+    <article class="legacy-card mini-panel">
+      <h2>Résumé opérationnel</h2>
+      <div class="ops-grid">
+        <div><span id="validatedCount">0</span><small>Validées</small></div>
+        <div><span id="ignoredCount">0</span><small>Ignorées</small></div>
+        <div><span id="riskAvg">0</span><small>Risque moyen</small></div>
+      </div>
+    </article>
+  </div>
+
+  <article class="legacy-card reports-card">
+    <h2>Derniers signalements</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Date</th><th>Image</th><th>Prédiction</th><th>Risque</th><th>Statut</th><th>Agent</th></tr>
+        </thead>
+        <tbody id="reportsTable"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

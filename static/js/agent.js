@@ -1,225 +1,134 @@
-// --- State & Navigation ---
-let imagesProcessed = 0;
+let pendingReports = [];
+let currentIndex = 0;
+let processed = 0;
 let startTime = Date.now();
-let pendingImages = [];
-let currentImageIndex = 0;
-let chartInstance = null;
 
-// --- DOM Elements ---
-const targetImage = document.getElementById('target-image');
-const pendingCountEl = document.getElementById('pending-count');
-const avgTimeEl = document.getElementById('avg-time');
-const btnLeft = document.getElementById('btn-left');
-const btnSpace = document.getElementById('btn-space');
-const btnRight = document.getElementById('btn-right');
+const topPending = document.getElementById("topPending");
+const avgTime = document.getElementById("avgTime");
+const agentEmpty = document.getElementById("agentEmpty");
+const agentImage = document.getElementById("agentImage");
+const aiBadge = document.getElementById("aiBadge");
+const aiText = document.getElementById("aiText");
 
-// Navigation
-document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    // Update active class
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    link.classList.add('active');
-    
-    // Switch view
-    const targetId = link.getAttribute('data-target');
-    document.querySelectorAll('.view-section').forEach(v => {
-      v.classList.remove('active', 'd-flex');
-      v.classList.add('d-none');
-    });
-    
-    const targetView = document.getElementById(targetId);
-    targetView.classList.remove('d-none');
-    // Moderation is flex row, Dashboard is flex column
-    targetView.classList.add(targetId === 'view-moderation' ? 'd-flex' : 'd-flex');
+const detailId = document.getElementById("detailId");
+const detailLocation = document.getElementById("detailLocation");
+const detailFileSize = document.getElementById("detailFileSize");
+const detailColor = document.getElementById("detailColor");
+const detailDimensions = document.getElementById("detailDimensions");
+const detailContrast = document.getElementById("detailContrast");
+const detailPrediction = document.getElementById("detailPrediction");
+const detailRisk = document.getElementById("detailRisk");
+const detailQuality = document.getElementById("detailQuality");
+const detailTags = document.getElementById("detailTags");
+const colorSwatch = document.getElementById("colorSwatch");
 
-    // Update Title
-    document.getElementById('current-view-title').innerText = link.innerText.trim();
+async function loadPending() {
+  const response = await fetch("/api/images/pending");
+  pendingReports = await response.json();
+  currentIndex = 0;
+  renderCurrent();
+}
 
-    // Render chart if dashboard
-    if (targetId === 'view-dashboard') {
-      initChart();
-    }
-  });
-});
-
-// --- API & Logic ---
-
-async function fetchPendingImages() {
-  try {
-    const response = await fetch('/api/images/pending');
-    pendingImages = await response.json();
-    updateDashboardStats();
-    
-    if (pendingImages.length > 0) {
-      loadCurrentImage();
-    } else {
-      showEmptyState();
-    }
-  } catch (e) {
-    console.error("Erreur chargement images", e);
+function updateMetrics() {
+  topPending.textContent = pendingReports.length;
+  if (processed === 0) {
+    avgTime.textContent = "-- s";
+  } else {
+    const seconds = (Date.now() - startTime) / 1000;
+    avgTime.textContent = `${(seconds / processed).toFixed(1)} s`;
   }
 }
 
-function updateDashboardStats() {
-  pendingCountEl.innerText = pendingImages.length - currentImageIndex;
-  
-  if (imagesProcessed > 0) {
-    const elapsedSeconds = (Date.now() - startTime) / 1000;
-    const avg = (elapsedSeconds / imagesProcessed).toFixed(1);
-    avgTimeEl.innerText = `${avg} s`;
-    avgTimeEl.classList.toggle('text-success', avg < 2.0);
-  }
-}
+function renderCurrent() {
+  updateMetrics();
 
-function showEmptyState() {
-  targetImage.src = '';
-  targetImage.alt = 'Aucune image en attente';
-  document.getElementById('pred-text').innerText = `Terminé`;
-  document.getElementById('pred-conf').innerText = `-`;
-  document.getElementById('meta-id').innerText = `#--`;
-  document.getElementById('meta-gps').innerText = `--`;
-  document.getElementById('meta-size').innerText = `-- Ko`;
-  document.getElementById('meta-color-text').innerHTML = `-- <div id="meta-color-box" class="border rounded" style="width: 20px; height: 20px; background: transparent;"></div>`;
-  document.getElementById('meta-tags').innerHTML = '<span class="text-secondary small">Aucun signalement en attente</span>';
-}
-
-function loadCurrentImage() {
-  if (currentImageIndex >= pendingImages.length) {
-    fetchPendingImages(); // Refresh if empty
+  if (pendingReports.length === 0) {
+    agentImage.hidden = true;
+    aiBadge.hidden = true;
+    agentEmpty.hidden = false;
+    clearDetails();
     return;
   }
 
-  const imgData = pendingImages[currentImageIndex];
-  
-  // Set Image
-  targetImage.src = imgData.filepath;
-  
-  // Update Badge
-  const pred = imgData.ai_prediction || 'Inconnu';
-  document.getElementById('pred-text').innerText = `Prédiction : ${pred}`;
-  const confBadge = document.getElementById('pred-conf');
-  confBadge.innerText = `${imgData.ai_confidence || 0}%`;
-  confBadge.className = `badge rounded-pill ai-confidence ${pred === 'Pleine' ? 'text-bg-danger' : 'text-bg-success'}`;
-  
-  // Update Fixed Right Panel Metadata
-  document.getElementById('meta-id').innerText = `#WDP-${imgData.id}`;
-  document.getElementById('meta-gps').innerText = imgData.lat ? `${imgData.lat}, ${imgData.lng}` : 'Inconnu';
-  document.getElementById('meta-size').innerText = `${imgData.file_size_kb || 0} Ko`;
-  
-  const color = imgData.avg_color_hex || '#000000';
-  document.getElementById('meta-color-text').innerHTML = `${color} <div id="meta-color-box" class="border rounded" style="width: 20px; height: 20px; background: ${color};"></div>`;
-  
-  const tags = imgData.citizen_tags;
-  document.getElementById('meta-tags').innerHTML = tags 
-    ? `<span class="badge text-bg-danger bg-opacity-25 border border-danger text-danger fs-6 px-3 py-2">${tags}</span>`
-    : '<span class="text-secondary small">Aucun tag</span>';
+  const report = pendingReports[currentIndex];
+  agentEmpty.hidden = true;
+  agentImage.hidden = false;
+  aiBadge.hidden = false;
+  agentImage.src = report.image_url;
+  aiText.textContent = `Prédiction : ${report.ai_prediction} · ${report.ai_confidence}%`;
 
-  // Preload next image
-  if (currentImageIndex + 1 < pendingImages.length) {
-    const nextImg = new Image();
-    nextImg.src = pendingImages[currentImageIndex + 1].filepath;
-  }
+  detailId.textContent = `#${report.id}`;
+  detailLocation.textContent = report.lat && report.lng ? `${report.lat.toFixed(5)}, ${report.lng.toFixed(5)}` : "--";
+  detailFileSize.textContent = `${report.file_size_kb || "--"} Ko`;
+  detailColor.textContent = report.avg_color_hex || "--";
+  detailDimensions.textContent = report.dimensions || "--";
+  detailContrast.textContent = report.contrast_level ?? "--";
+  detailPrediction.textContent = report.ai_prediction ? `${report.ai_prediction} · ${report.ai_confidence}%` : "--";
+  detailRisk.textContent = report.risk_score !== null ? `${report.risk_score}/100 · ${report.risk_level}` : "--";
+  detailQuality.textContent = report.quality_score !== null ? `${report.quality_score}/100 · ${report.quality_warning}` : "--";
+  detailTags.textContent = report.citizen_tags || "Aucun tag";
+  colorSwatch.style.background = report.avg_color_hex || "transparent";
 }
 
-async function sendAnnotation(id, annotation) {
-  try {
-    await fetch(`/api/images/${id}/annotate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ annotation })
-    });
-  } catch (e) {
-    console.error("Erreur annotation", e);
-  }
+function clearDetails() {
+  detailId.textContent = "#--";
+  detailLocation.textContent = "--";
+  detailFileSize.textContent = "-- Ko";
+  detailColor.textContent = "--";
+  detailDimensions.textContent = "--";
+  detailContrast.textContent = "--";
+  detailPrediction.textContent = "--";
+  detailRisk.textContent = "--";
+  detailQuality.textContent = "--";
+  detailTags.textContent = "Aucun signalement en attente";
+  colorSwatch.style.background = "transparent";
 }
 
-function processAction(action, btnElement, animationClass) {
-  if (currentImageIndex >= pendingImages.length) return;
+async function annotate(annotation, animationClass = "swipe-up") {
+  if (pendingReports.length === 0) return;
+  const report = pendingReports[currentIndex];
 
-  btnElement.classList.add('active');
-  targetImage.classList.add(animationClass);
+  agentImage.classList.add(animationClass);
 
-  const imgData = pendingImages[currentImageIndex];
-  sendAnnotation(imgData.id, action);
+  const response = await fetch(`/api/images/${report.id}/annotate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ annotation })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    alert(error.error || "Erreur d'annotation.");
+    agentImage.classList.remove(animationClass);
+    return;
+  }
 
   setTimeout(() => {
-    btnElement.classList.remove('active');
-    targetImage.classList.remove(animationClass);
-    
-    imagesProcessed++;
-    currentImageIndex++;
-    updateDashboardStats();
-    loadCurrentImage();
-  }, 300);
+    agentImage.classList.remove(animationClass);
+    processed += 1;
+    pendingReports.splice(currentIndex, 1);
+    if (currentIndex >= pendingReports.length) currentIndex = 0;
+    renderCurrent();
+  }, 250);
 }
 
-// --- Event Listeners ---
+document.querySelectorAll("[data-action]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const action = button.dataset.action;
+    if (action === "Vide") annotate(action, "swipe-left");
+    else if (action === "Pleine" || action === "Débordante") annotate(action, "swipe-right");
+    else annotate(action, "swipe-up");
+  });
+});
 
-document.addEventListener('keydown', (e) => {
-  if (e.repeat) return;
-  // Only trigger if we are on the moderation view
-  if (!document.getElementById('view-moderation').classList.contains('active')) return;
-
-  switch(e.code) {
-    case 'ArrowLeft': processAction('Vide', btnLeft, 'swipe-left'); break;
-    case 'ArrowRight': processAction('Pleine', btnRight, 'swipe-right'); break;
-    case 'Space': processAction('Skip', btnSpace, 'swipe-up'); break;
+document.addEventListener("keydown", (event) => {
+  if (event.repeat) return;
+  if (event.key === "ArrowLeft") annotate("Vide", "swipe-left");
+  if (event.key === "ArrowRight") annotate("Pleine", "swipe-right");
+  if (event.code === "Space") {
+    event.preventDefault();
+    annotate("Ignored", "swipe-up");
   }
 });
 
-btnLeft.addEventListener('click', () => processAction('Vide', btnLeft, 'swipe-left'));
-btnRight.addEventListener('click', () => processAction('Pleine', btnRight, 'swipe-right'));
-btnSpace.addEventListener('click', () => processAction('Skip', btnSpace, 'swipe-up'));
-
-// --- Dashboard Chart (Mock Data) ---
-function initChart() {
-  const ctx = document.getElementById('trendChart').getContext('2d');
-  
-  if (chartInstance) {
-    chartInstance.destroy();
-  }
-
-  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-  const textColor = isDark ? '#94a3b8' : '#64748b';
-  const gridColor = isDark ? '#1e293b' : '#e2e8f0';
-
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-      datasets: [
-        {
-          label: 'Poubelles Pleines',
-          data: [65, 59, 80, 81, 56, 120, 140],
-          borderColor: '#dc3545',
-          backgroundColor: 'rgba(220, 53, 69, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Poubelles Vides/Ok',
-          data: [28, 48, 40, 19, 86, 27, 40],
-          borderColor: '#198754',
-          backgroundColor: 'rgba(25, 135, 84, 0.1)',
-          fill: true,
-          tension: 0.4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: textColor } }
-      },
-      scales: {
-        y: { grid: { color: gridColor }, ticks: { color: textColor } },
-        x: { grid: { color: gridColor }, ticks: { color: textColor } }
-      }
-    }
-  });
-}
-
-// Init
-fetchPendingImages();
+loadPending();
