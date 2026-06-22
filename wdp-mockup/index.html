@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WDP - Wild Dump Prevention</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet Heatmap plugin -->
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-pills">
+      <button class="nav-btn active" onclick="switchView('citizen')">📱 Citoyen (Upload)</button>
+      <button class="nav-btn" onclick="switchView('agent')">🎯 Agent (Annotation)</button>
+      <button class="nav-btn" onclick="switchView('dashboard')">📊 Dashboard (Temps Réel)</button>
+    </div>
+  </nav>
+
+  <!-- View Container -->
+  <div class="view-container">
+
+    <!-- 1. CITIZEN VIEW -->
+    <div id="view-citizen" class="view active">
+      <div class="citizen-panel">
+        <h2>Signaler un bac</h2>
+        <p style="color: var(--text-secondary); margin-top: 0.5rem; margin-bottom: 2rem;">Aidez-nous à garder la ville propre.</p>
+        
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <span class="upload-icon">📸</span>
+          <h3>Prendre une photo</h3>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">ou glissez une image ici</p>
+          <input type="file" id="fileInput" accept="image/*" capture="environment" style="display: none;" onchange="simulateUpload()">
+        </div>
+
+        <div class="loader-container" id="uploadLoader">
+          <div class="spinner"></div>
+          <p style="margin-top: 1rem;">Compression & Analyse en cours...</p>
+        </div>
+
+        <div id="uploadSuccess" style="display: none; padding: 2rem; color: var(--accent);">
+          <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">✅</span>
+          <h3>Merci ! Signalement envoyé.</h3>
+          <p class="eco-message">🌱 L'image a été compressée (-2Mo CO2 économisés)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. AGENT VIEW -->
+    <div id="view-agent" class="view">
+      <div class="agent-layout">
+        <!-- Image Viewer -->
+        <div class="image-viewer">
+          <img src="assets/trash_sample.png" alt="Poubelle à annoter">
+          
+          <div class="annotation-controls">
+            <button class="btn-annotate btn-full" onclick="nextImage()">
+              🔴 Pleine <span class="shortcut-hint">P</span>
+            </button>
+            <button class="btn-annotate btn-empty" onclick="nextImage()">
+              🟢 Vide <span class="shortcut-hint">V</span>
+            </button>
+            <button class="btn-annotate" style="background: var(--text-secondary); color: white;" onclick="nextImage()">
+              ⏭ Passer <span class="shortcut-hint">→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metadata Contextual Panel -->
+        <div class="metadata-panel">
+          <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Analyse Automatique</h3>
+          <div class="meta-item">
+            <span>Taille fichier</span>
+            <span style="color: var(--accent);">450 Ko (Compressé)</span>
+          </div>
+          <div class="meta-item">
+            <span>Date de capture</span>
+            <span>Il y a 5 min</span>
+          </div>
+          <div class="meta-item">
+            <span>Couleur Dominante</span>
+            <span style="display: flex; gap: 0.5rem; align-items: center;">
+              Sombre <div style="width: 15px; height: 15px; background: #333; border-radius: 50%;"></div>
+            </span>
+          </div>
+          <div class="meta-item">
+            <span>Détection de contours</span>
+            <span style="color: var(--danger);">Haute (Surcharge)</span>
+          </div>
+          
+          <div style="margin-top: auto; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">
+            <p style="font-size: 0.85rem; color: var(--accent);">✨ Pré-classification : <strong>Pleine</strong> (Fiabilité 85%)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. DASHBOARD VIEW -->
+    <div id="view-dashboard" class="view">
+      <div class="dashboard-layout">
+        
+        <!-- KPIs -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <span class="kpi-value" id="kpi-signalements">1,245</span>
+            <span class="kpi-label">Signalements ce mois</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-value" style="color: var(--danger);">18%</span>
+            <span class="kpi-label">Taux de débordement</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-value" style="color: var(--text-primary);">4.2t</span>
+            <span class="kpi-label">Volume estimé</span>
+          </div>
+          <div class="kpi-card" style="border-color: var(--accent);">
+            <span class="kpi-value" style="color: var(--accent); font-size: 1.5rem;">🌱 45GB</span>
+            <span class="kpi-label">Bande passante sauvée (Green IT)</span>
+          </div>
+        </div>
+
+        <!-- Map -->
+        <div class="map-container">
+          <div id="map"></div>
+          
+          <!-- Map Layers Control (Custom UX) -->
+          <div style="position: absolute; top: 1rem; right: 1rem; background: var(--panel-bg); backdrop-filter: blur(8px); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); z-index: 1000;">
+            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">Calques (Temps réel)</h4>
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.5rem; cursor: pointer;">
+              <input type="checkbox" checked id="layer-heatmap"> Heatmap Risque
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+              <input type="checkbox" checked id="layer-meteo"> 🌧️ Pluie prév. (Météo)
+            </label>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-container">
+          <h3 style="margin-bottom: 1rem; font-size: 1rem;">Répartition Hebdomadaire</h3>
+          <div style="flex: 1; position: relative;">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

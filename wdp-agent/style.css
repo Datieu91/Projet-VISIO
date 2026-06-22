@@ -1,0 +1,104 @@
+/* 
+ * Custom Styles for WDP Agent Interface
+ * Extending Bootstrap 5 - Brutalist Design (No Curves)
+ */
+
+ * {
+  -webkit-tap-highlight-color: transparent;
+  /* Brutalist requirement: NO CURVES */
+  border-radius: 0 !important;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* 
+ * Workspace Background
+ * Pure black in dark mode to reduce glare, pure white in light mode
+ */
+[data-bs-theme="dark"] .workspace-bg { background-color: #000; }
+[data-bs-theme="light"] .workspace-bg { background-color: #f8f9fa; }
+
+/* 
+ * Glassmorphism utility
+ * Adapts to theme (Light/Dark glass)
+ */
+[data-bs-theme="dark"] .glass-panel {
+  background: rgba(33, 37, 41, 0.7);
+  backdrop-filter: blur(16px);
+}
+[data-bs-theme="light"] .glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+}
+
+[data-bs-theme="dark"] .meta-content {
+  background: var(--bs-dark);
+}
+[data-bs-theme="light"] .meta-content {
+  background: var(--bs-body-bg);
+}
+
+/* Custom Control Buttons */
+.control-btn {
+  background: var(--bs-body-bg);
+  border-width: 2px !important;
+  border-style: solid;
+  padding: 1.5rem 2.5rem;
+  min-width: 160px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+[data-bs-theme="dark"] .control-btn {
+  background: rgba(33, 37, 41, 0.9);
+  backdrop-filter: blur(8px);
+}
+
+.control-btn .key {
+  font-family: monospace;
+}
+
+/* Active states (when key pressed or clicked) */
+.control-btn.active.border-success { background: var(--bs-success); color: #000 !important; transform: scale(1.05); }
+.control-btn.active.border-success .key { background: rgba(0,0,0,0.2) !important; color: #000 !important; border-color: rgba(0,0,0,0.2) !important;}
+
+.control-btn.active.border-danger { background: var(--bs-danger); color: #fff !important; transform: scale(1.05); }
+.control-btn.active.border-danger .key { background: rgba(0,0,0,0.2) !important; color: #fff !important; border-color: rgba(0,0,0,0.2) !important;}
+
+.control-btn.active.border-secondary { background: var(--bs-secondary); color: #fff !important; transform: scale(1.05); }
+.control-btn.active.border-secondary .key { background: rgba(0,0,0,0.2) !important; color: #fff !important; border-color: rgba(0,0,0,0.2) !important;}
+
+/* Swipe Animations */
+.swipe-left { animation: swipeOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.swipe-right { animation: swipeOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.swipe-up { animation: swipeOutUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+@keyframes swipeOutLeft {
+  to { transform: translateX(-100%) rotate(-10deg); opacity: 0; }
+}
+@keyframes swipeOutRight {
+  to { transform: translateX(100%) rotate(10deg); opacity: 0; }
+}
+@keyframes swipeOutUp {
+  to { transform: translateY(-100%); opacity: 0; }
+}
+
+/* Focus Mode (Metadata Overlay) */
+.metadata-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(24px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+[data-bs-theme="light"] .metadata-overlay {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.metadata-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}

@@ -1,0 +1,24 @@
+# Environnement Virtuel Python
+venv/
+env/
+.venv/
+
+# Fichiers de cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de données locale & Uploads d'images (Ne pas commit en prod)
+data/db/
+data/uploads/
+*.sqlite3
+*.db
+
+# Fichiers d'environnement
+.env
+.env.local
+
+# Fichiers système Windows/Mac
+.DS_Store
+Thumbs.db

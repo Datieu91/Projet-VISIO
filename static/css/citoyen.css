@@ -1,0 +1,59 @@
+:root {
+  --bg-color: #f8fafc;
+  --surface-color: #ffffff;
+  --surface-light: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --accent-color: #10b981;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #121212;
+    --surface-color: #1e1e1e;
+    --surface-light: #2c2c2c;
+    --text-primary: #f5f5f5;
+    --text-secondary: #a0a0a0;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.workspace-bg {
+  background-color: var(--bg-color);
+}
+
+.state {
+  display: none;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.state.active {
+  display: flex !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.camera-container {
+  background: var(--surface-color);
+  transition: all 0.2s;
+}
+
+.camera-container:active {
+  transform: scale(0.98);
+  border-color: var(--accent-color) !important;
+}

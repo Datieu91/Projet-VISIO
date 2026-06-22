@@ -1,0 +1,121 @@
+/* 
+ * WDP Agent SaaS Styles 
+ */
+
+ * {
+  -webkit-tap-highlight-color: transparent;
+  /* Very subtle rounding for SaaS premium feel instead of strict 90deg */
+  border-radius: 6px; 
+}
+
+/* Base resets for specific elements to look sharp */
+.rounded-circle { border-radius: 50% !important; }
+.rounded-pill { border-radius: 50rem !important; }
+.border-end, .border-bottom, .border-top { border-radius: 0 !important; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* SaaS Color Variables */
+:root {
+  --bg-app: #ffffff;
+  --bg-canvas: #f8fafc;
+  --border-color: #e2e8f0;
+  --card-bg: #ffffff;
+  --image-area: #f1f5f9;
+}
+
+[data-bs-theme="dark"] {
+  --bg-app: #0f172a;
+  --bg-canvas: #020617;
+  --border-color: #1e293b;
+  --card-bg: #0f172a;
+  --image-area: #000000;
+}
+
+/* Utilities */
+.bg-app { background-color: var(--bg-app) !important; border-color: var(--border-color) !important; }
+.bg-canvas { background-color: var(--bg-canvas) !important; }
+.bg-image-area { background-color: var(--image-area) !important; }
+.border { border-color: var(--border-color) !important; }
+.border-end { border-color: var(--border-color) !important; }
+.border-bottom { border-color: var(--border-color) !important; }
+.border-top { border-color: var(--border-color) !important; }
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background-color: var(--bg-app);
+}
+
+.nav-link {
+  color: var(--bs-body-color);
+  padding: 0.8rem 1rem;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.nav-link:hover {
+  background-color: var(--bg-canvas);
+  opacity: 1;
+}
+
+.nav-link.active {
+  background-color: var(--bs-success);
+  color: #fff !important;
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+/* Main Header */
+.top-header {
+  height: 70px;
+  min-height: 70px;
+}
+
+/* SaaS Cards */
+.saas-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Control Buttons */
+.control-btn {
+  background: var(--bg-canvas);
+  border-width: 2px !important;
+  border-style: solid;
+  color: var(--bs-body-color);
+  min-width: 140px;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+[data-bs-theme="dark"] .control-btn {
+  background: var(--border-color);
+}
+
+.control-btn .key { font-family: monospace; font-size: 1rem; }
+
+/* Active Button States */
+.control-btn.active.border-success { background: var(--bs-success); color: #fff !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3); }
+.control-btn.active.border-success .key { background: rgba(0,0,0,0.2) !important; border-color: rgba(0,0,0,0.1) !important;}
+
+.control-btn.active.border-danger { background: var(--bs-danger); color: #fff !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); }
+.control-btn.active.border-danger .key { background: rgba(0,0,0,0.2) !important; border-color: rgba(0,0,0,0.1) !important;}
+
+.control-btn.active.border-secondary { background: var(--bs-secondary); color: #fff !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3); }
+.control-btn.active.border-secondary .key { background: rgba(0,0,0,0.2) !important; border-color: rgba(0,0,0,0.1) !important;}
+
+/* Swipe Animations */
+.swipe-left { animation: swipeOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.swipe-right { animation: swipeOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.swipe-up { animation: swipeOutUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+@keyframes swipeOutLeft { to { transform: translateX(-100%) rotate(-10deg); opacity: 0; } }
+@keyframes swipeOutRight { to { transform: translateX(100%) rotate(10deg); opacity: 0; } }
+@keyframes swipeOutUp { to { transform: translateY(-100%); opacity: 0; } }
