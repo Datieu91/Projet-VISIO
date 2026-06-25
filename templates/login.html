@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Connexion · GreenBin{% endblock %}
+{% block content %}
+<header class="page-header login-header">
+  <div>
+    <p class="section-label">Accès sécurisé</p>
+    <h1>Connexion agent</h1>
+    <p class="header-subtitle">La modération et le dashboard sont réservés aux utilisateurs internes.</p>
+  </div>
+</header>
+
+<section class="login-layout">
+  <article class="panel login-card">
+    <span class="mini-badge">Accès interne</span>
+    <h2>Se connecter</h2>
+    <p class="muted-text">Les citoyens signalent librement. Les agents valident les images et les administrateurs consultent le dashboard.</p>
+
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" class="login-form">
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <label>Identifiant
+        <input name="username" type="text" placeholder="agent ou admin" autocomplete="username" required>
+      </label>
+      <label>Mot de passe
+        <input name="password" type="password" placeholder="••••••••" autocomplete="current-password" required>
+      </label>
+      <button class="btn success full" type="submit">Se connecter</button>
+    </form>
+
+    <div class="demo-accounts">
+      <strong>Comptes de test</strong>
+      <span>Agent : <code>agent / agent123</code></span>
+      <span>Admin : <code>admin / admin123</code></span>
+    </div>
+  </article>
+</section>
+{% endblock %}

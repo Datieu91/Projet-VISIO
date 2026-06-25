@@ -1,81 +1,112 @@
 {% extends "base.html" %}
-{% block title %}Signalement citoyen · WDP SaaS{% endblock %}
+{% block title %}Signalement · GreenBin{% endblock %}
+{% block map_assets %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
 {% block content %}
-<header class="topbar">
+<header class="page-header citizen-header">
   <div>
     <p class="section-label">Signalement citoyen</p>
-    <h1>Créer un signalement</h1>
+    <h1>Signaler une poubelle en moins d’une minute</h1>
+    <p class="header-subtitle">Ajoutez une photo, confirmez la position sur la carte, puis envoyez le signalement aux agents.</p>
   </div>
-  <div class="top-metrics">
-    <div><span id="citizenStatus">Prêt</span><small>État</small></div>
-    <div><span>Green IT</span><small>Compression</small></div>
+  <div class="status-pill">
+    <span class="pulse-dot"></span>
+    <div><strong id="citizenStatus">Prêt</strong><small>État du formulaire</small></div>
   </div>
 </header>
 
+<section class="workflow-steps" aria-label="Étapes du signalement">
+  <article><span>1</span><strong>Photo</strong><small>JPG, PNG ou WEBP</small></article>
+  <article><span>2</span><strong>Position</strong><small>GPS ou carte</small></article>
+  <article><span>3</span><strong>Envoi</strong><small>Analyse automatique</small></article>
+</section>
+
 <section class="citizen-layout">
   <article class="panel report-panel">
-    <form id="uploadForm">
-      <label class="camera-drop" for="imageInput">
-        <span class="camera-icon">📷</span>
-        <strong>Ouvrir l’appareil photo</strong>
-        <small>ou choisir une image JPG, PNG, WEBP · max 5 Mo</small>
-      </label>
-      <input id="imageInput" name="image" type="file" accept="image/*" capture="environment" hidden required>
+    <form id="uploadForm" class="report-form">
+      <div class="upload-map-grid">
+        <div class="upload-column">
+          <label class="camera-drop" for="imageInput">
+            <span class="camera-icon">📷</span>
+            <strong>Ajouter une photo</strong>
+            <small>Ouvrir l’appareil photo ou choisir une image · max 5 Mo</small>
+          </label>
+          <input id="imageInput" name="image" type="file" accept="image/*" capture="environment" hidden required>
+          <img id="preview" class="preview-img" alt="Aperçu image" hidden>
 
-      <img id="preview" class="preview-img" alt="Aperçu image" hidden>
+          <div class="meta-grid">
+            <div class="meta-item"><small>GPS</small><strong id="gpsStatus">Recherche…</strong></div>
+            <div class="meta-item"><small>Poids initial</small><strong id="sizeOriginal">--</strong></div>
+            <div class="meta-item"><small>Optimisation</small><strong id="sizeOptimized">--</strong></div>
+          </div>
+          <div id="qualityPanel" class="quality-panel neutral" aria-live="polite">
+            <div>
+              <strong>Contrôle qualité image</strong>
+              <p id="qualityMessage">Ajoutez une image pour vérifier sa qualité avant l’envoi.</p>
+            </div>
+            <ul id="qualityList"></ul>
+          </div>
 
-      <div class="meta-grid">
-        <div class="meta-item"><small>Localisation</small><strong id="gpsStatus">Recherche GPS…</strong></div>
-        <div class="meta-item"><small>Poids initial</small><strong id="sizeOriginal">--</strong></div>
-        <div class="meta-item"><small>Image envoyée</small><strong id="sizeOptimized">--</strong></div>
+        </div>
+
+        <section class="map-card citizen-map-card">
+          <div class="panel-head compact">
+            <div>
+              <h2>Localisation</h2>
+              <small id="mapHelp">Le point bleu indique votre position. Déplacez le marqueur vert si besoin.</small>
+            </div>
+            <span class="map-chip">Carte active</span>
+          </div>
+          <div id="citizenMap" class="leaflet-map citizen-map" aria-label="Carte de localisation du signalement"></div>
+        </section>
       </div>
 
-      <section class="map-card citizen-map-card">
-        <div class="panel-head compact">
-          <h2>Localisation du signalement</h2>
-          <small id="mapHelp">Déplace le marqueur ou clique sur la carte pour corriger la position.</small>
-        </div>
-        <div id="citizenMap" class="leaflet-map citizen-map" aria-label="Carte de localisation du signalement"></div>
-      </section>
-
       <fieldset class="tag-box">
-        <legend>Tags citoyen</legend>
+        <legend>Précisions optionnelles</legend>
         <label><input type="checkbox" value="encombrants"> Encombrants</label>
-        <label><input type="checkbox" value="dangereux"> ⚠️ Dangereux</label>
+        <label><input type="checkbox" value="dangereux"> Dangereux</label>
         <label><input type="checkbox" value="odeur"> Odeur</label>
-        <label><input type="checkbox" value="recyclage"> ♻️ Recyclage</label>
+        <label><input type="checkbox" value="recyclage"> Recyclage</label>
       </fieldset>
 
       <div class="action-row">
-        <button type="button" class="btn muted" id="resetButton">Refaire</button>
+        <button type="button" class="btn muted" id="resetButton">Réinitialiser</button>
         <button type="submit" class="btn success" id="sendButton">Envoyer le signalement</button>
       </div>
     </form>
   </article>
 
   <aside class="panel project-card">
-    <h2>GreenBin / VISIO</h2>
-    <p>Cette interface envoie une image au backend Flask. Le serveur sauvegarde le fichier, extrait les caractéristiques visuelles, applique des règles de classification et calcule un score de risque.</p>
+    <span class="mini-badge">VISIO · WDP</span>
+    <h2>Ce que fait GreenBin</h2>
+    <p>Le backend Flask sauvegarde l’image, extrait les caractéristiques visuelles, applique des règles explicables et calcule un score de risque.</p>
     <ul class="feature-list">
-      <li>Upload sécurisé</li>
-      <li>GPS et tags citoyen</li>
-      <li>Extraction : taille, couleur, contraste</li>
-      <li>Prédiction : Vide, Pleine, Débordante</li>
-      <li>Score de risque 0–100</li>
+      <li>Upload sécurisé et stockage local</li>
+      <li>Localisation GPS sur carte</li>
+      <li>Classification Vide / Pleine</li>
+      <li>Score de risque pour prioriser</li>
     </ul>
-    <a class="btn ghost full" href="{{ url_for('agent_app') }}">Aller à la modération</a>
+    {% if current_user and current_user.role in ['agent', 'admin'] %}
+    <a class="btn ghost full" href="{{ url_for('agent_app') }}">Voir la modération</a>
+    {% else %}
+    <a class="btn ghost full" href="{{ url_for('login') }}">Connexion agent</a>
+    {% endif %}
   </aside>
 </section>
 
 <section id="resultCard" class="panel result-card" hidden>
-  <h2>✅ Signalement transmis</h2>
-  <div id="resultContent"></div>
+  <h2>Signalement transmis</h2>
+  <div id="resultContent" class="result-grid"></div>
+  {% if current_user and current_user.role in ['agent', 'admin'] %}
   <div class="action-row compact-actions">
     <a class="btn muted" href="{{ url_for('agent_app') }}">Voir côté agent</a>
-    <a class="btn success" href="{{ url_for('dashboard_app') }}">Voir dashboard</a>
+    {% if current_user.role == 'admin' %}<a class="btn success" href="{{ url_for('dashboard_app') }}">Voir dashboard</a>{% endif %}
   </div>
+  {% endif %}
 </section>
 {% endblock %}
 {% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/citoyen.js') }}"></script>
 {% endblock %}

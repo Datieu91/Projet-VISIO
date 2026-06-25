@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Dataset · GreenBin{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="section-label">Jeu de données</p>
+    <h1>Dataset vide / pleine</h1>
+    <p class="header-subtitle">Suivi de la préparation des images, des annotations CSV et de l’import dans SQLite.</p>
+  </div>
+  <div class="top-metrics">
+    <div><span>{{ stats.db_total }}</span><small>En base</small></div>
+    <div><span>{{ stats.annotations.count }}</span><small>Images CSV</small></div>
+  </div>
+</header>
+
+<section class="kpi-grid dataset-kpis">
+  <article class="metric-card"><small>Annotations CSV</small><span>{{ stats.annotations.count }}</span><em>{{ stats.annotations.path }}</em></article>
+  <article class="metric-card success"><small>CSV enrichi</small><span>{{ stats.enriched.count }}</span><em>{{ stats.enriched.path }}</em></article>
+  <article class="metric-card danger"><small>Signalements importés</small><span>{{ stats.db_total }}</span><em>{{ stats.db_pending }} en attente · {{ stats.db_validated }} validés</em></article>
+</section>
+
+<section class="dataset-grid">
+  <article class="panel">
+    <div class="panel-head compact">
+      <div>
+        <h2>Répartition des labels</h2>
+        <small>Labels manuels attendus : vide / pleine.</small>
+      </div>
+    </div>
+    <div class="dataset-bars">
+      {% if stats.annotations.labels %}
+        {% for label, count in stats.annotations.labels.items() %}
+        <div class="dataset-row"><span>{{ label }}</span><strong>{{ count }}</strong></div>
+        {% endfor %}
+      {% else %}
+        <p class="muted-note">Aucun fichier <code>data/annotations.csv</code> détecté.</p>
+      {% endif %}
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head compact">
+      <div>
+        <h2>Split train / test</h2>
+        <small>Train = calibration des règles, test = évaluation.</small>
+      </div>
+    </div>
+    <div class="dataset-bars">
+      {% if stats.annotations.splits %}
+        {% for split, count in stats.annotations.splits.items() %}
+        <div class="dataset-row"><span>{{ split }}</span><strong>{{ count }}</strong></div>
+        {% endfor %}
+      {% else %}
+        <p class="muted-note">Aucun split disponible.</p>
+      {% endif %}
+    </div>
+  </article>
+</section>
+
+<section class="panel commands-panel">
+  <div class="panel-head compact">
+    <div>
+      <h2>Commandes utiles</h2>
+      <small>À lancer depuis la racine du projet.</small>
+    </div>
+  </div>
+  <div class="command-list">
+    <code>python scripts\prepare_dataset.py</code>
+    <span>Renomme les images et génère <strong>data/annotations.csv</strong>.</span>
+    <code>python scripts\seed_dataset.py --reset</code>
+    <span>Importe les images annotées dans la base SQLite.</span>
+    <code>python scripts\evaluate_rules.py</code>
+    <span>Calcule accuracy, precision et recall sur les signalements validés.</span>
+    <code>python scripts\dataset_summary.py</code>
+    <span>Affiche un résumé du dataset en terminal.</span>
+  </div>
+</section>
+
+<section class="panel reports-card">
+  <div class="panel-head compact"><h2>Colonnes disponibles</h2></div>
+  <div class="tag-cloud">
+    {% for column in stats.annotations.columns %}<span>{{ column }}</span>{% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,5 +1,5 @@
 def classify_image(features):
-    """Simple conditional rule engine. No ML model is used."""
+    """Simple conditional rule engine. No ML model is used. Output is limited to Vide / Pleine."""
     contrast = float(features.get("contrast_level") or 0)
     brightness = float(features.get("brightness") or 0)
     file_size_kb = int(features.get("file_size_kb") or 0)
@@ -12,7 +12,7 @@ def classify_image(features):
         score += 35
         reasons.append("contraste élevé")
 
-    if brightness < 100:
+    if brightness < 105:
         score += 30
         reasons.append("luminosité faible")
 
@@ -24,8 +24,7 @@ def classify_image(features):
         score += 10
         reasons.append("qualité image incertaine")
 
-    if score >= 75:
-        return "Débordante", min(score + 10, 99), reasons
     if score >= 50:
-        return "Pleine", min(score + 10, 99), reasons
-    return "Vide", max(50, 95 - score), reasons or ["aucun signal fort de débordement"]
+        return "Pleine", min(score + 10, 95), reasons or ["signaux visuels de remplissage"]
+
+    return "Vide", max(55, 95 - score), reasons or ["aucun signal fort de remplissage"]

@@ -5,13 +5,11 @@ def calculate_risk_score(prediction, confidence, tags, features):
     tags_text = (tags or "").lower()
 
     if prediction == "Vide":
-        explanations.append("état détecté comme vide: +0")
+        score += 5
+        explanations.append("état détecté comme vide: +5")
     elif prediction == "Pleine":
-        score += 45
-        explanations.append("état détecté comme pleine: +45")
-    elif prediction == "Débordante":
-        score += 65
-        explanations.append("état détecté comme débordante: +65")
+        score += 50
+        explanations.append("état détecté comme pleine: +50")
 
     if confidence and confidence >= 80:
         score += 5

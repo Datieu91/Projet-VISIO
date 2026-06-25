@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Évaluation · GreenBin{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="section-label">Évaluation des règles</p>
+    <h1>Accuracy · Precision · Recall</h1>
+    <p class="header-subtitle">Comparaison entre l’annotation humaine et la prédiction automatique par règles.</p>
+  </div>
+  <div class="top-metrics">
+    <div><span>{{ db_eval.accuracy }}%</span><small>Accuracy DB</small></div>
+    <div><span>{{ db_eval.total }}</span><small>Images évaluées</small></div>
+  </div>
+</header>
+
+<section class="kpi-grid">
+  <article class="metric-card"><small>Total évalué</small><span>{{ db_eval.total }}</span><em>Signalements validés avec annotation agent</em></article>
+  <article class="metric-card success"><small>Prédictions correctes</small><span>{{ db_eval.correct }}</span><em>Annotation = prédiction</em></article>
+  <article class="metric-card danger"><small>Accuracy</small><span>{{ db_eval.accuracy }}%</span><em>Mesure globale</em></article>
+</section>
+
+<section class="dataset-grid">
+  <article class="panel">
+    <div class="panel-head compact">
+      <div><h2>Matrice de confusion</h2><small>Ligne = annotation humaine, colonne = prédiction.</small></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Vérité / Prédiction</th><th>Vide</th><th>Pleine</th></tr></thead>
+        <tbody>
+          <tr><td>Vide</td><td>{{ db_eval.matrix.Vide.Vide }}</td><td>{{ db_eval.matrix.Vide.Pleine }}</td></tr>
+          <tr><td>Pleine</td><td>{{ db_eval.matrix.Pleine.Vide }}</td><td>{{ db_eval.matrix.Pleine.Pleine }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head compact">
+      <div><h2>Métriques par classe</h2><small>Precision = fiabilité des prédictions, recall = capacité à retrouver la classe.</small></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Classe</th><th>Precision</th><th>Recall</th><th>TP / FP / FN</th></tr></thead>
+        <tbody>
+          {% for label, metric in db_eval.per_class.items() %}
+          <tr>
+            <td>{{ label }}</td>
+            <td>{{ metric.precision }}%</td>
+            <td>{{ metric.recall }}%</td>
+            <td>{{ metric.tp }} / {{ metric.fp }} / {{ metric.fn }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<section class="panel commands-panel">
+  <div class="panel-head compact"><div><h2>Évaluation depuis le CSV enrichi</h2><small>Utile si vous voulez évaluer avant import SQLite.</small></div></div>
+  {% if dataset_eval.source_exists %}
+    <p class="muted-note">Source : <code>{{ dataset_eval.source_path }}</code></p>
+    <div class="ops-grid evaluation-mini">
+      <div><span>{{ dataset_eval.total }}</span><small>Images CSV</small></div>
+      <div><span>{{ dataset_eval.correct }}</span><small>Correctes</small></div>
+      <div><span>{{ dataset_eval.accuracy }}%</span><small>Accuracy</small></div>
+    </div>
+  {% else %}
+    <p class="muted-note">Aucun <code>data/annotations_enriched.csv</code> trouvé. Lancez d’abord <code>python scripts\enrich_and_seed_dataset.py</code> ou <code>python scripts\evaluate_rules.py</code>.</p>
+  {% endif %}
+</section>
+
+<section class="panel commands-panel">
+  <div class="panel-head compact"><h2>Interprétation</h2></div>
+  <p class="muted-note">Ces métriques répondent à l’attendu “résultats de classification”. Elles doivent être commentées dans le rapport : quelles règles fonctionnent, quelles erreurs reviennent, et comment améliorer les seuils.</p>
+</section>
+{% endblock %}

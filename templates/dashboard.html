@@ -1,100 +1,154 @@
 {% extends "base.html" %}
-{% block title %}Dashboard · WDP SaaS{% endblock %}
+{% block title %}Dashboard · GreenBin{% endblock %}
+{% block map_assets %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
 {% block content %}
-<header class="topbar dashboard-topbar">
-  <h1>Dashboard</h1>
+<header class="page-header dashboard-header">
+  <div>
+    <p class="section-label">Pilotage territorial</p>
+    <h1>Dashboard des zones à risque</h1>
+    <p class="header-subtitle">Suivez les signalements, les validations et la répartition géographique des risques.</p>
+  </div>
   <div class="top-metrics">
-    <div>
-      <small>Images en attente</small>
-      <span id="topPending">0</span>
-    </div>
-    <div>
-      <small>Cadence moyenne</small>
-      <span id="topCadence">-- s</span>
-    </div>
+    <div><span id="topPending">0</span><small>En attente</small></div>
+    <div><span id="topCadence">-- s</span><small>Cadence</small></div>
   </div>
 </header>
 
-<section class="legacy-dashboard">
-  <div class="legacy-kpis">
-    <article class="legacy-card">
-      <p>Signalements totaux (semaine)</p>
-      <strong id="weeklyTotal">0</strong>
-      <small class="positive">↗ +12%</small>
-    </article>
+<section class="kpi-grid">
+  <article class="metric-card"><small>Signalements totaux</small><span id="weeklyTotal">0</span><em>Cette semaine</em></article>
+  <article class="metric-card danger"><small>Taux poubelles pleines</small><span id="fullRate">0%</span><em>Selon validation ou règles</em></article>
+  <article class="metric-card success"><small>Temps moyen</small><span id="avgProcessingTime">-- s</span><em>Modération</em></article>
+</section>
 
-    <article class="legacy-card">
-      <p>Taux de “poubelle pleine”</p>
-      <strong id="fullRate" class="danger-text">0%</strong>
-      <small>Basé sur les validations agent</small>
-    </article>
 
-    <article class="legacy-card">
-      <p>Temps de traitement moyen</p>
-      <strong id="avgProcessingTime" class="success-text">-- s</strong>
-      <small class="positive">↘ -0.4s</small>
-    </article>
-  </div>
+<section class="panel dashboard-filter-panel" aria-label="Filtres du dashboard">
+  <form id="dashboardFilters" class="dashboard-filters">
+    <label>
+      <span>Statut</span>
+      <select id="filterStatus" name="status">
+        <option value="">Tous</option>
+        <option value="Pending">En attente</option>
+        <option value="Validated">Validé</option>
+        <option value="Ignored">Ignoré</option>
+      </select>
+    </label>
+    <label>
+      <span>État</span>
+      <select id="filterLabel" name="label">
+        <option value="">Tous</option>
+        <option value="Vide">Vide</option>
+        <option value="Pleine">Pleine</option>
+      </select>
+    </label>
+    <label>
+      <span>Risque</span>
+      <select id="filterRisk" name="risk">
+        <option value="">Tous</option>
+        <option value="Faible">Faible</option>
+        <option value="Moyen">Moyen</option>
+        <option value="Élevé">Élevé</option>
+      </select>
+    </label>
+    <label>
+      <span>Du</span>
+      <input id="filterDateFrom" name="date_from" type="date">
+    </label>
+    <label>
+      <span>Au</span>
+      <input id="filterDateTo" name="date_to" type="date">
+    </label>
+    <label class="filter-wide">
+      <span>Zone / tag</span>
+      <input id="filterZone" name="zone" type="search" placeholder="ex. odeur, encombrants, parc...">
+    </label>
+    <div class="filter-actions">
+      <button class="btn success small" type="submit">Appliquer</button>
+      <a id="exportCsvButton" class="btn ghost small" href="{{ url_for('export_reports_csv') }}">Exporter CSV</a>
+      <button id="resetFiltersButton" class="btn muted small" type="button">Réinitialiser</button>
+    </div>
+  </form>
+</section>
 
-  <div class="legacy-main-grid">
-    <article class="legacy-card chart-card">
-      <div class="panel-head compact">
+<section class="quick-admin-grid">
+  <a class="quick-admin-card" href="{{ url_for('dataset_app') }}">
+    <span>🗂️</span>
+    <strong>Dataset</strong>
+    <small>Voir les images, labels et split train/test</small>
+  </a>
+  <a class="quick-admin-card" href="{{ url_for('evaluation_app') }}">
+    <span>🎯</span>
+    <strong>Évaluation</strong>
+    <small>Accuracy, precision et recall des règles</small>
+  </a>
+</section>
+
+<section class="dashboard-main-grid">
+  <article class="panel chart-card">
+    <div class="panel-head compact">
+      <div>
         <h2>Évolution des signalements</h2>
-        <button id="refreshButton" class="btn muted small">Rafraîchir</button>
+        <small>Comparaison des prédictions pleines / vides sur la semaine.</small>
       </div>
-      <div class="chart-legend">
-        <span class="legend full"></span> Poubelles Pleines
-        <span class="legend empty"></span> Poubelles Vides/Ok
-      </div>
-      <canvas id="signalementsChart" height="260"></canvas>
-    </article>
+      <button id="refreshButton" class="btn muted small">Rafraîchir</button>
+    </div>
+    <div class="chart-legend">
+      <span class="legend full"></span> Pleines
+      <span class="legend empty"></span> Vides
+    </div>
+    <canvas id="signalementsChart" height="260"></canvas>
+  </article>
 
-    <article class="legacy-card heatmap-card">
-      <div class="panel-head compact">
+  <article class="panel map-dashboard-card">
+    <div class="panel-head compact">
+      <div>
         <h2>Carte des zones à risque</h2>
-        <button id="refreshMapButton" class="btn muted small">Recharger carte</button>
+        <small>Carte filtrable par statut, état, risque, période et zone/tag.</small>
       </div>
-      <div id="dashboardMap" class="leaflet-map dashboard-map" aria-label="Carte des signalements géolocalisés"></div>
-      <div class="map-legend">
-        <span><i class="legend-dot pending"></i> En attente</span>
-        <span><i class="legend-dot low"></i> Risque faible</span>
-        <span><i class="legend-dot medium"></i> Risque moyen</span>
-        <span><i class="legend-dot high"></i> Risque élevé</span>
-      </div>
-    </article>
-  </div>
-
-  <div class="legacy-secondary-grid">
-    <article class="legacy-card mini-panel">
-      <h2>Répartition automatique</h2>
-      <div class="progress-row"><span>Vide</span><div class="progress"><i id="barEmpty"></i></div><strong id="emptyCount">0</strong></div>
-      <div class="progress-row"><span>Pleine</span><div class="progress"><i id="barFull"></i></div><strong id="fullCount">0</strong></div>
-      <div class="progress-row"><span>Risque élevé</span><div class="progress"><i id="barHighRisk"></i></div><strong id="highRiskCount">0</strong></div>
-    </article>
-
-    <article class="legacy-card mini-panel">
-      <h2>Résumé opérationnel</h2>
-      <div class="ops-grid">
-        <div><span id="validatedCount">0</span><small>Validées</small></div>
-        <div><span id="ignoredCount">0</span><small>Ignorées</small></div>
-        <div><span id="riskAvg">0</span><small>Risque moyen</small></div>
-      </div>
-    </article>
-  </div>
-
-  <article class="legacy-card reports-card">
-    <h2>Derniers signalements</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Date</th><th>Image</th><th>Prédiction</th><th>Risque</th><th>Statut</th><th>Agent</th></tr>
-        </thead>
-        <tbody id="reportsTable"></tbody>
-      </table>
+      <button id="refreshMapButton" class="btn muted small">Recharger</button>
+    </div>
+    <div id="dashboardMap" class="leaflet-map dashboard-map" aria-label="Carte des signalements géolocalisés"></div>
+    <div class="map-legend">
+      <span><i class="legend-dot pending"></i> En attente</span>
+      <span><i class="legend-dot low"></i> Faible</span>
+      <span><i class="legend-dot medium"></i> Moyen</span>
+      <span><i class="legend-dot high"></i> Élevé</span>
     </div>
   </article>
 </section>
+
+<section class="dashboard-secondary-grid">
+  <article class="panel mini-panel">
+    <h2>Répartition</h2>
+    <div class="progress-row"><span>Vide</span><div class="progress"><i id="barEmpty"></i></div><strong id="emptyCount">0</strong></div>
+    <div class="progress-row"><span>Pleine</span><div class="progress"><i id="barFull"></i></div><strong id="fullCount">0</strong></div>
+    <div class="progress-row"><span>Risque élevé</span><div class="progress"><i id="barHighRisk"></i></div><strong id="highRiskCount">0</strong></div>
+  </article>
+
+  <article class="panel mini-panel">
+    <h2>Résumé opérationnel</h2>
+    <div class="ops-grid">
+      <div><span id="validatedCount">0</span><small>Validées</small></div>
+      <div><span id="ignoredCount">0</span><small>Ignorées</small></div>
+      <div><span id="riskAvg">0</span><small>Risque moyen</small></div>
+    </div>
+  </article>
+</section>
+
+<article class="panel reports-card">
+  <div class="panel-head compact"><h2>Derniers signalements filtrés</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Date</th><th>Image</th><th>Prédiction</th><th>Risque</th><th>Statut</th><th>Agent</th></tr>
+      </thead>
+      <tbody id="reportsTable"></tbody>
+    </table>
+  </div>
+</article>
 {% endblock %}
 {% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

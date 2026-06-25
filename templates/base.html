@@ -3,43 +3,73 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}WDP SaaS · GreenBin{% endblock %}</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQkFQXbTsbcI+O4Drt/rXAzLbhv32bk=" crossorigin="">
+  <title>{% block title %}GreenBin · VISIO{% endblock %}</title>
+  {% block map_assets %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body class="app-shell">
   <aside class="sidebar">
-    <a class="brand" href="{{ url_for('agent_app') }}">
+    <a class="brand" href="{{ url_for('citoyen_app') }}" aria-label="Accueil GreenBin">
       <span class="brand-mark">◎</span>
       <span>
-        <strong>WDP SaaS</strong>
-        <small>Agent territorial</small>
+        <strong>GreenBin</strong>
+        <small>Prévention des dépôts sauvages</small>
       </span>
     </a>
 
-    <nav class="side-nav">
+    <nav class="side-nav" aria-label="Navigation principale">
       <a class="{{ 'active' if active == 'citoyen' else '' }}" href="{{ url_for('citoyen_app') }}">
-        <span>📸</span> Signalement
+        <span class="nav-ico">📸</span>
+        <span><strong>Signalement</strong><small>Citoyen · public</small></span>
       </a>
+
+      {% if current_user and current_user.role in ['agent', 'admin'] %}
       <a class="{{ 'active' if active == 'agent' else '' }}" href="{{ url_for('agent_app') }}">
-        <span>🖼️</span> Modération
+        <span class="nav-ico">✅</span>
+        <span><strong>Modération</strong><small>Agent territorial</small></span>
       </a>
+      {% endif %}
+
+      {% if current_user and current_user.role == 'admin' %}
       <a class="{{ 'active' if active == 'dashboard' else '' }}" href="{{ url_for('dashboard_app') }}">
-        <span>📊</span> Dashboard
+        <span class="nav-ico">📊</span>
+        <span><strong>Dashboard</strong><small>Pilotage & zones</small></span>
       </a>
+      <a class="{{ 'active' if active == 'dataset' else '' }}" href="{{ url_for('dataset_app') }}">
+        <span class="nav-ico">🗂️</span>
+        <span><strong>Dataset</strong><small>Import & répartition</small></span>
+      </a>
+      <a class="{{ 'active' if active == 'evaluation' else '' }}" href="{{ url_for('evaluation_app') }}">
+        <span class="nav-ico">🎯</span>
+        <span><strong>Évaluation</strong><small>Accuracy · precision · recall</small></span>
+      </a>
+      {% endif %}
+
+      {% if not current_user %}
+      <a class="{{ 'active' if active == 'login' else '' }}" href="{{ url_for('login') }}">
+        <span class="nav-ico">🔐</span>
+        <span><strong>Connexion</strong><small>Agent / admin</small></span>
+      </a>
+      {% endif %}
     </nav>
 
-    <div class="agent-card">
-      <span class="avatar">●</span>
-      <strong>Agent WDP</strong>
+    <div class="session-card">
+      <span class="avatar">{{ current_user.role[0]|upper if current_user else 'C' }}</span>
+      <div>
+        <strong>{{ current_user.label if current_user else 'Accès citoyen' }}</strong>
+        <small>{{ 'Mode dev actif' if dev_bypass else ('Session active' if current_user else 'Signalement libre') }}</small>
+      </div>
     </div>
+
+    {% if current_user and not dev_bypass %}
+    <a class="logout-link" href="{{ url_for('logout') }}">Se déconnecter</a>
+    {% endif %}
   </aside>
 
   <main class="main-content">
     {% block content %}{% endblock %}
   </main>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

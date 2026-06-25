@@ -1,14 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Modération · WDP SaaS{% endblock %}
+{% block title %}Modération · GreenBin{% endblock %}
 {% block content %}
-<header class="topbar">
+<header class="page-header moderation-header">
   <div>
-    <p class="section-label">Modération</p>
-    <h1>Validation des signalements</h1>
+    <p class="section-label">Espace agent</p>
+    <h1>Valider les signalements</h1>
+    <p class="header-subtitle">Contrôlez la prédiction automatique et validez l’état réel de la poubelle.</p>
   </div>
   <div class="top-metrics">
-    <div><span id="topPending">0</span><small>Images en attente</small></div>
-    <div><span id="avgTime">-- s</span><small>Cadence moyenne</small></div>
+    <div><span id="topPending">0</span><small>En attente</small></div>
+    <div><span id="avgTime">-- s</span><small>Cadence</small></div>
   </div>
 </header>
 
@@ -18,36 +19,55 @@
       <div id="aiBadge" class="ai-badge" hidden>🤖 <span id="aiText">Prédiction --</span></div>
       <img id="agentImage" class="moderation-image" alt="Image à modérer" hidden>
       <div id="agentEmpty" class="empty-state">
-        <span>🗂️</span>
-        <strong>Aucune image en attente</strong>
-        <small>Crée d’abord un signalement via l’onglet Signalement.</small>
+        <span>📭</span>
+        <strong>Aucun signalement en attente</strong>
+        <small>Créez un signalement depuis l’espace citoyen pour alimenter la file de modération.</small>
         <a class="btn success small" href="{{ url_for('citoyen_app') }}">Créer un signalement</a>
       </div>
     </div>
 
     <div class="moderation-actions">
-      <button class="decision-btn empty" data-action="Vide"><strong>VIDE</strong><span>◀</span></button>
-      <button class="decision-btn skip" data-action="Ignored"><strong>PASSER</strong><span>ESPACE</span></button>
-      <button class="decision-btn full" data-action="Pleine"><strong>PLEINE</strong><span>▶</span></button>
-      <button class="decision-btn overflow" data-action="Débordante"><strong>DÉBORDANTE</strong><span>!</span></button>
+      <button class="decision-btn empty" data-action="Vide"><strong>Vide</strong><span>←</span></button>
+      <button class="decision-btn skip" data-action="Ignored"><strong>Passer</strong><span>Espace</span></button>
+      <button class="decision-btn full" data-action="Pleine"><strong>Pleine</strong><span>→</span></button>
     </div>
   </article>
 
   <aside class="details-panel">
-    <h2>ℹ️ Détails techniques</h2>
+    <div class="panel-head compact">
+      <div>
+        <p class="section-label">Analyse</p>
+        <h2>Détails techniques</h2>
+      </div>
+    </div>
     <dl class="technical-details">
       <dt>ID signalement</dt><dd id="detailId">#--</dd>
       <dt>Localisation</dt><dd id="detailLocation">--</dd>
       <dt>Taille du fichier</dt><dd id="detailFileSize">-- Ko</dd>
-      <dt>Analyse des couleurs</dt><dd><span id="colorSwatch" class="color-dot"></span><span id="detailColor">--</span></dd>
+      <dt>Couleur moyenne</dt><dd><span id="colorSwatch" class="color-dot"></span><span id="detailColor">--</span></dd>
       <dt>Dimensions</dt><dd id="detailDimensions">--</dd>
       <dt>Contraste</dt><dd id="detailContrast">--</dd>
       <dt>Prédiction règles</dt><dd id="detailPrediction">--</dd>
       <dt>Score risque</dt><dd id="detailRisk">--</dd>
       <dt>Qualité image</dt><dd id="detailQuality">--</dd>
-      <dt>Tags du citoyen</dt><dd id="detailTags">Aucun signalement en attente</dd>
+      <dt>Tags citoyen</dt><dd id="detailTags">Aucun signalement en attente</dd>
     </dl>
   </aside>
+
+  <aside class="panel recent-panel">
+    <div class="panel-head compact">
+      <div>
+        <p class="section-label">Corrections</p>
+        <h2>Dernières décisions</h2>
+        <small>Modifiez ou annulez rapidement une annotation faite par erreur.</small>
+      </div>
+      <button id="refreshRecentButton" class="btn muted small" type="button">Rafraîchir</button>
+    </div>
+    <div id="recentAnnotations" class="recent-list">
+      <p class="muted-note">Aucune annotation récente.</p>
+    </div>
+  </aside>
+
 </section>
 {% endblock %}
 {% block scripts %}
