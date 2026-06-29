@@ -32,6 +32,7 @@
         <option value="Pending">En attente</option>
         <option value="Validated">Validé</option>
         <option value="Ignored">Ignoré</option>
+        <option value="Collected">Collecté</option>
       </select>
     </label>
     <label>
@@ -82,6 +83,26 @@
     <strong>Évaluation</strong>
     <small>Accuracy, precision et recall des règles</small>
   </a>
+  <a class="quick-admin-card" href="{{ url_for('conformity_app') }}">
+    <span>🛡️</span>
+    <strong>Conformité</strong>
+    <small>GPS, image, annotation et doublons</small>
+  </a>
+  <a class="quick-admin-card" href="{{ url_for('route_planning_app') }}">
+    <span>🧭</span>
+    <strong>Parcours</strong>
+    <small>Tournée optimisée pour les agents</small>
+  </a>
+  <a class="quick-admin-card" href="{{ url_for('bin_locations_app') }}">
+    <span>🗺️</span>
+    <strong>Poubelles</strong>
+    <small>Emplacements prédéfinis et historique</small>
+  </a>
+  <a class="quick-admin-card" href="{{ url_for('admin_settings_app') }}">
+    <span>⚙️</span>
+    <strong>Paramètres</strong>
+    <small>Seuils de qualité, risque et carte</small>
+  </a>
 </section>
 
 <section class="dashboard-main-grid">
@@ -103,10 +124,13 @@
   <article class="panel map-dashboard-card">
     <div class="panel-head compact">
       <div>
-        <h2>Carte des zones à risque</h2>
-        <small>Carte filtrable par statut, état, risque, période et zone/tag.</small>
+        <h2>Carte opérationnelle</h2>
+        <small>Par défaut, seules les poubelles pleines, critiques ou à traiter sont affichées.</small>
       </div>
-      <button id="refreshMapButton" class="btn muted small">Recharger</button>
+      <div class="map-actions">
+        <label class="toggle-field"><input id="heatmapToggle" type="checkbox" checked> Heatmap</label>
+        <button id="refreshMapButton" class="btn muted small">Recharger</button>
+      </div>
     </div>
     <div id="dashboardMap" class="leaflet-map dashboard-map" aria-label="Carte des signalements géolocalisés"></div>
     <div class="map-legend">
@@ -150,5 +174,6 @@
 {% endblock %}
 {% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

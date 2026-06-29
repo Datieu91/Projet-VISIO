@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Poubelles prédéfinies · GreenBin{% endblock %}
+{% block map_assets %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="section-label">Référentiel territorial</p>
+    <h1>Emplacements prédéfinis</h1>
+    <p class="header-subtitle">Gérez les poubelles officielles et visualisez l’historique des signalements associés.</p>
+  </div>
+</header>
+
+<section class="bins-layout">
+  <article class="panel">
+    <div class="panel-head compact">
+      <div>
+        <h2>Carte des poubelles officielles</h2>
+        <small>Cliquez sur la carte pour préremplir la latitude et la longitude.</small>
+      </div>
+    </div>
+    <div id="binsMap" class="leaflet-map dashboard-map"></div>
+  </article>
+
+  <aside class="panel">
+    <h2>Ajouter une poubelle</h2>
+    <form id="binForm" class="settings-form compact-form">
+      <label>Nom <input name="name" required placeholder="Poubelle Parc Nord"></label>
+      <label>Zone <input name="zone" placeholder="Quartier / parc / rue"></label>
+      <label>Type
+        <select name="bin_type">
+          <option value="classique">Classique</option>
+          <option value="recyclage">Recyclage</option>
+          <option value="verre">Verre</option>
+          <option value="compost">Compost</option>
+        </select>
+      </label>
+      <label>Capacité (L) <input name="capacity_l" type="number" min="0" placeholder="120"></label>
+      <label>Latitude <input id="binLat" name="lat" type="number" step="0.000001" required></label>
+      <label>Longitude <input id="binLng" name="lng" type="number" step="0.000001" required></label>
+      <button class="btn success" type="submit">Ajouter l’emplacement</button>
+    </form>
+  </aside>
+</section>
+
+<section class="panel">
+  <div class="panel-head compact"><h2>Historique par poubelle</h2></div>
+  <div id="binsList" class="bin-history-list"></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/bin_locations.js') }}"></script>
+{% endblock %}

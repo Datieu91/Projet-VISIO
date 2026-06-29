@@ -69,6 +69,37 @@
   </aside>
 
 </section>
+
+<section class="agent-ops-grid">
+  <article class="panel priority-panel">
+    <div class="panel-head compact">
+      <div>
+        <p class="section-label">Priorisation</p>
+        <h2>Alertes agent</h2>
+        <small>Signalements à risque élevé, zones récurrentes et anomalies à vérifier.</small>
+      </div>
+      <button id="refreshPrioritiesButton" class="btn muted small" type="button">Rafraîchir</button>
+    </div>
+    <div id="agentPriorities" class="priority-list">
+      <p class="muted-note">Chargement des priorités…</p>
+    </div>
+  </article>
+
+  <article class="panel activity-panel">
+    <div class="panel-head compact">
+      <div>
+        <p class="section-label">Traçabilité</p>
+        <h2>Journal d’activité</h2>
+        <small>Historique des validations, corrections et annulations.</small>
+      </div>
+      <button id="refreshActivityButton" class="btn muted small" type="button">Rafraîchir</button>
+    </div>
+    <div id="agentActivity" class="activity-list">
+      <p class="muted-note">Aucune activité récente.</p>
+    </div>
+  </article>
+</section>
+
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/agent.js') }}"></script>

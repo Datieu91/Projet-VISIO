@@ -5,12 +5,15 @@ let citizenMap = null;
 let citizenMarker = null;
 let userMarker = null;
 let accuracyCircle = null;
+let binLayer = null;
 let qualityAssessment = { blocking: false, warnings: [] };
 
 const form = document.getElementById("uploadForm");
 const imageInput = document.getElementById("imageInput");
 const preview = document.getElementById("preview");
 const gpsStatus = document.getElementById("gpsStatus");
+const gpsAvailability = document.getElementById("gpsAvailability");
+const gpsDetail = document.getElementById("gpsDetail");
 const resetButton = document.getElementById("resetButton");
 const sendButton = document.getElementById("sendButton");
 const resultCard = document.getElementById("resultCard");
@@ -21,6 +24,11 @@ const citizenStatus = document.getElementById("citizenStatus");
 const qualityPanel = document.getElementById("qualityPanel");
 const qualityMessage = document.getElementById("qualityMessage");
 const qualityList = document.getElementById("qualityList");
+const uploadPreviewPanel = document.getElementById("uploadPreviewPanel");
+const uploadCard = document.querySelector(".upload-card");
+const uploadForm = document.getElementById("uploadForm");
+const floatingUploadButton = document.getElementById("floatingUploadButton");
+const optionsCard = document.getElementById("optionsCard");
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 const MIN_WIDTH = 300;
@@ -28,7 +36,7 @@ const MIN_HEIGHT = 300;
 const defaultPosition = [48.8566, 2.3522];
 
 function createTileLayer() {
-  return L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  return L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
     maxZoom: 19,
     minZoom: 4,
     updateWhenIdle: true,
@@ -40,18 +48,27 @@ function createTileLayer() {
 
 const reportIcon = L.divIcon({
   className: "citizen-pin",
-  html: "<span>📍</span>",
-  iconSize: [44, 44],
-  iconAnchor: [22, 43],
-  popupAnchor: [0, -40]
+  html: "<span></span>",
+  iconSize: [26, 34],
+  iconAnchor: [13, 34],
+  popupAnchor: [0, -30]
 });
 
 const userIcon = L.divIcon({
   className: "user-position-pin",
   html: "<span></span>",
-  iconSize: [22, 22],
-  iconAnchor: [11, 11]
+  iconSize: [14, 14],
+  iconAnchor: [7, 7]
 });
+
+
+const officialBinIcon = L.divIcon({
+  className: "official-bin-pin",
+  html: "<span>🗑️</span>",
+  iconSize: [30, 30],
+  iconAnchor: [15, 15]
+});
+
 
 function formatSize(bytes) {
   if (!bytes) return "--";
@@ -148,17 +165,14 @@ async function validateSelectedImage(file) {
     if (assessment.blocking) {
       updateQualityPanel("error", "Image refusée avant envoi.", assessment.blockingReasons);
       sendButton.disabled = true;
-      citizenStatus.textContent = "Image refusée";
       return assessment;
     }
 
     const info = [`Dimensions : ${assessment.width}×${assessment.height}px`, `Luminosité : ${assessment.brightness}/255`];
     if (assessment.warnings.length) {
       updateQualityPanel("warning", "Image acceptée avec avertissement.", [...assessment.warnings, ...info]);
-      citizenStatus.textContent = "Image à vérifier";
     } else {
       updateQualityPanel("ok", "Image exploitable pour l'analyse.", info);
-      citizenStatus.textContent = "Image prête";
     }
 
     sendButton.disabled = false;
@@ -167,7 +181,6 @@ async function validateSelectedImage(file) {
     qualityAssessment = { blocking: true, blockingReasons: [error.message], warnings: [] };
     updateQualityPanel("error", "Image illisible.", [error.message]);
     sendButton.disabled = true;
-    citizenStatus.textContent = "Image refusée";
     return qualityAssessment;
   }
 }
@@ -192,27 +205,43 @@ function updateUserPosition(lat, lng, accuracy) {
     userMarker.setLatLng(coords);
   }
 
-  if (accuracyCircle) accuracyCircle.remove();
-  accuracyCircle = L.circle(coords, {
-    radius: Math.min(accuracy || 35, 120),
-    color: "#38bdf8",
-    weight: 1,
-    fillColor: "#38bdf8",
-    fillOpacity: 0.10,
-    interactive: false
-  }).addTo(citizenMap);
+  if (accuracyCircle) {
+    accuracyCircle.remove();
+    accuracyCircle = null;
+  }
+}
+
+
+async function loadOfficialBins() {
+  if (!citizenMap || typeof L === "undefined") return;
+  try {
+    const response = await fetch("/api/bin-locations");
+    if (!response.ok) return;
+    const bins = await response.json();
+    if (binLayer) binLayer.remove();
+    binLayer = L.layerGroup().addTo(citizenMap);
+    bins.forEach((bin) => {
+      L.marker([bin.lat, bin.lng], { icon: officialBinIcon, interactive: true })
+        .bindPopup(`<strong>${bin.name}</strong><br>${bin.zone || "Emplacement officiel"}<br>${bin.bin_type}`)
+        .addTo(binLayer);
+    });
+  } catch (error) {
+    console.warn("Emplacements officiels indisponibles", error);
+  }
 }
 
 function initCitizenMap() {
   const mapElement = document.getElementById("citizenMap");
   if (!mapElement || typeof L === "undefined") {
-    if (gpsStatus) gpsStatus.textContent = "Carte indisponible";
+    if (gpsAvailability) gpsAvailability.textContent = "Carte indisponible";
+    if (gpsStatus) gpsStatus.textContent = "Aucune prévisualisation cartographique";
     return;
   }
 
   citizenMap = L.map(mapElement, {
     zoomControl: false,
     scrollWheelZoom: false,
+    tap: true,
     preferCanvas: true,
     zoomAnimation: true,
     fadeAnimation: true
@@ -234,6 +263,7 @@ function initCitizenMap() {
   });
 
   updateLocation(defaultPosition[0], defaultPosition[1], false);
+  loadOfficialBins();
   setTimeout(() => citizenMap.invalidateSize(), 250);
 }
 
@@ -243,6 +273,11 @@ imageInput.addEventListener("change", async () => {
   selectedImage = file;
   preview.src = URL.createObjectURL(file);
   preview.hidden = false;
+  if (uploadPreviewPanel) uploadPreviewPanel.hidden = false;
+  if (uploadForm) uploadForm.classList.add("has-image");
+  if (floatingUploadButton) floatingUploadButton.hidden = true;
+  if (uploadCard) { uploadCard.classList.remove("empty-upload"); uploadCard.classList.add("has-image"); }
+  if (optionsCard) optionsCard.hidden = false;
   sizeOriginal.textContent = formatSize(file.size);
   sizeOptimized.textContent = "Optimisation serveur";
   resultCard.hidden = true;
@@ -256,10 +291,14 @@ resetButton.addEventListener("click", () => {
   qualityAssessment = { blocking: false, warnings: [] };
   imageInput.value = "";
   preview.hidden = true;
+  if (uploadPreviewPanel) uploadPreviewPanel.hidden = true;
+  if (uploadForm) uploadForm.classList.remove("has-image");
+  if (floatingUploadButton) floatingUploadButton.hidden = false;
+  if (uploadCard) { uploadCard.classList.add("empty-upload"); uploadCard.classList.remove("has-image"); }
+  if (optionsCard) optionsCard.hidden = true;
   resultCard.hidden = true;
   sizeOriginal.textContent = "--";
   sizeOptimized.textContent = "--";
-  citizenStatus.textContent = "Prêt";
   sendButton.disabled = false;
   updateQualityPanel("neutral", "Ajoutez une image pour vérifier sa qualité avant l’envoi.", []);
 });
@@ -273,17 +312,18 @@ if ("geolocation" in navigator) {
       const lng = position.coords.longitude;
       updateLocation(lat, lng, true);
       updateUserPosition(lat, lng, position.coords.accuracy);
-      citizenStatus.textContent = "GPS trouvé";
-      gpsStatus.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} · votre position`;
+      if (gpsAvailability) gpsAvailability.textContent = "GPS trouvé";
+            gpsStatus.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} · votre position`;
     },
     () => {
-      gpsStatus.textContent = `${defaultPosition[0].toFixed(5)}, ${defaultPosition[1].toFixed(5)} · GPS indisponible`;
-      citizenStatus.textContent = "GPS indisponible";
+      if (gpsAvailability) gpsAvailability.textContent = "GPS indisponible";
+            gpsStatus.textContent = `${defaultPosition[0].toFixed(5)}, ${defaultPosition[1].toFixed(5)} · position par défaut`;
     },
     { enableHighAccuracy: false, timeout: 4500, maximumAge: 60000 }
   );
 } else {
-  gpsStatus.textContent = `${defaultPosition[0].toFixed(5)}, ${defaultPosition[1].toFixed(5)} · GPS non supporté`;
+  if (gpsAvailability) gpsAvailability.textContent = "GPS non supporté";
+    gpsStatus.textContent = `${defaultPosition[0].toFixed(5)}, ${defaultPosition[1].toFixed(5)} · position par défaut`;
 }
 
 form.addEventListener("submit", async (event) => {
@@ -303,7 +343,6 @@ form.addEventListener("submit", async (event) => {
     if (!proceed) return;
   }
 
-  citizenStatus.textContent = "Envoi…";
   sendButton.disabled = true;
   const tags = Array.from(document.querySelectorAll(".tag-box input:checked")).map((tag) => tag.value);
   const formData = new FormData();
@@ -316,14 +355,12 @@ form.addEventListener("submit", async (event) => {
   const data = await response.json();
 
   if (!response.ok) {
-    citizenStatus.textContent = "Erreur";
     sendButton.disabled = false;
     alert(data.error || "Erreur lors de l'envoi.");
     return;
   }
 
   const report = data.report;
-  citizenStatus.textContent = "Transmis";
   sendButton.disabled = false;
   resultContent.innerHTML = `
     <p><strong>ID :</strong> #${report.id}</p>

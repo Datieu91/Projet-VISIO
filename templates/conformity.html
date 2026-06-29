@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Conformité · GreenBin{% endblock %}
+{% block content %}
+<header class="page-header dashboard-header">
+  <div>
+    <p class="section-label">Qualité des données</p>
+    <h1>Conformité des signalements</h1>
+    <p class="header-subtitle">Détecte les signalements incomplets : GPS manquant, image invalide, annotation manquante ou doublon possible.</p>
+  </div>
+</header>
+
+<section class="kpi-grid">
+  <article class="metric-card"><small>Total contrôlé</small><span>{{ overview.total }}</span><em>Signalements en base</em></article>
+  <article class="metric-card success"><small>Conformes</small><span>{{ overview.compliant }}</span><em>Sans anomalie détectée</em></article>
+  <article class="metric-card danger"><small>À corriger</small><span>{{ overview.non_compliant }}</span><em>Signalements incomplets</em></article>
+</section>
+
+<section class="panel conformity-summary">
+  <div class="panel-head compact"><h2>Types d'anomalies</h2></div>
+  <div class="tag-cloud">
+    <span>GPS manquant : {{ overview.counts.get('missing_gps', 0) }}</span>
+    <span>Image invalide : {{ overview.counts.get('invalid_image', 0) }}</span>
+    <span>Qualité faible : {{ overview.counts.get('low_quality', 0) }}</span>
+    <span>Annotation manquante : {{ overview.counts.get('missing_annotation', 0) }}</span>
+    <span>Doublon possible : {{ overview.counts.get('possible_duplicate', 0) }}</span>
+    <span>Fichier manquant : {{ overview.counts.get('missing_file', 0) }}</span>
+  </div>
+</section>
+
+<article class="panel reports-card">
+  <div class="panel-head compact"><h2>Signalements à vérifier</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Date</th><th>Image</th><th>Statut</th><th>Risque</th><th>Anomalies</th></tr></thead>
+      <tbody>
+        {% for report in overview.reports %}
+        {% if report.issues %}
+        <tr>
+          <td>#{{ report.id }}</td>
+          <td>{{ report.timestamp }}</td>
+          <td><img src="{{ report.image_url }}" alt="Signalement {{ report.id }}" loading="lazy"></td>
+          <td>{{ report.status }}</td>
+          <td>{{ report.risk_score or 0 }}/100 · {{ report.risk_level or '--' }}</td>
+          <td>
+            <div class="issue-list">
+              {% for issue in report.issues %}
+              <span class="issue-chip {{ issue.severity }}">{{ issue.label }}</span>
+              {% endfor %}
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+{% endblock %}

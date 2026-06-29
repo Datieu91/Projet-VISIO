@@ -5,70 +5,128 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}GreenBin · VISIO{% endblock %}</title>
   {% block map_assets %}{% endblock %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/navigation-clean.css') }}">
 </head>
-<body class="app-shell">
-  <aside class="sidebar">
-    <a class="brand" href="{{ url_for('citoyen_app') }}" aria-label="Accueil GreenBin">
-      <span class="brand-mark">◎</span>
-      <span>
+<body class="app-shell page-{{ active }}{% if active == 'login' %} login-shell{% endif %}">
+  <div class="eco-bg" aria-hidden="true">
+    <span class="orb orb-a"></span>
+    <span class="orb orb-b"></span>
+    <span class="orb orb-c"></span>
+  </div>
+
+  {% if active != 'login' %}
+  <header class="top-navigation" aria-label="Navigation GreenBin">
+    <a class="top-brand" href="{{ url_for('citoyen_app') }}" aria-label="Accueil GreenBin">
+      <span class="brand-mark">🍃</span>
+      <span class="brand-text">
         <strong>GreenBin</strong>
-        <small>Prévention des dépôts sauvages</small>
+        <small>WDP SaaS</small>
       </span>
     </a>
 
-    <nav class="side-nav" aria-label="Navigation principale">
+    <nav class="top-nav-links" aria-label="Navigation principale">
       <a class="{{ 'active' if active == 'citoyen' else '' }}" href="{{ url_for('citoyen_app') }}">
-        <span class="nav-ico">📸</span>
-        <span><strong>Signalement</strong><small>Citoyen · public</small></span>
+        <span class="nav-ico">🗑️</span>
+        <span class="nav-label"><strong>Signalement</strong></span>
       </a>
 
       {% if current_user and current_user.role in ['agent', 'admin'] %}
       <a class="{{ 'active' if active == 'agent' else '' }}" href="{{ url_for('agent_app') }}">
-        <span class="nav-ico">✅</span>
-        <span><strong>Modération</strong><small>Agent territorial</small></span>
+        <span class="nav-ico">🖼️</span>
+        <span class="nav-label"><strong>Modération</strong></span>
+      </a>
+      <a class="{{ 'active' if active == 'route' else '' }}" href="{{ url_for('route_planning_app') }}">
+        <span class="nav-ico">🧭</span>
+        <span class="nav-label"><strong>Parcours</strong></span>
       </a>
       {% endif %}
 
       {% if current_user and current_user.role == 'admin' %}
       <a class="{{ 'active' if active == 'dashboard' else '' }}" href="{{ url_for('dashboard_app') }}">
         <span class="nav-ico">📊</span>
-        <span><strong>Dashboard</strong><small>Pilotage & zones</small></span>
+        <span class="nav-label"><strong>Dashboard</strong></span>
       </a>
       <a class="{{ 'active' if active == 'dataset' else '' }}" href="{{ url_for('dataset_app') }}">
         <span class="nav-ico">🗂️</span>
-        <span><strong>Dataset</strong><small>Import & répartition</small></span>
+        <span class="nav-label"><strong>Dataset</strong></span>
+      </a>
+      <a class="{{ 'active' if active == 'bins' else '' }}" href="{{ url_for('bin_locations_app') }}">
+        <span class="nav-ico">🗺️</span>
+        <span class="nav-label"><strong>Poubelles</strong></span>
       </a>
       <a class="{{ 'active' if active == 'evaluation' else '' }}" href="{{ url_for('evaluation_app') }}">
         <span class="nav-ico">🎯</span>
-        <span><strong>Évaluation</strong><small>Accuracy · precision · recall</small></span>
+        <span class="nav-label"><strong>Évaluation</strong></span>
+      </a>
+      <a class="{{ 'active' if active == 'conformity' else '' }}" href="{{ url_for('conformity_app') }}">
+        <span class="nav-ico">🛡️</span>
+        <span class="nav-label"><strong>Conformité</strong></span>
+      </a>
+      <a class="{{ 'active' if active == 'settings' else '' }}" href="{{ url_for('admin_settings_app') }}">
+        <span class="nav-ico">⚙️</span>
+        <span class="nav-label"><strong>Paramètres</strong></span>
       </a>
       {% endif %}
 
       {% if not current_user %}
       <a class="{{ 'active' if active == 'login' else '' }}" href="{{ url_for('login') }}">
         <span class="nav-ico">🔐</span>
-        <span><strong>Connexion</strong><small>Agent / admin</small></span>
+        <span class="nav-label"><strong>Connexion</strong></span>
       </a>
       {% endif %}
     </nav>
 
-    <div class="session-card">
+    <div class="top-session">
       <span class="avatar">{{ current_user.role[0]|upper if current_user else 'C' }}</span>
       <div>
-        <strong>{{ current_user.label if current_user else 'Accès citoyen' }}</strong>
-        <small>{{ 'Mode dev actif' if dev_bypass else ('Session active' if current_user else 'Signalement libre') }}</small>
+        <strong>{{ current_user.label if current_user else 'Citoyen' }}</strong>
+        <small>{{ 'Mode dev' if dev_bypass else ('Session active' if current_user else 'Accès libre') }}</small>
       </div>
+      {% if current_user and not dev_bypass %}
+      <a class="logout-link" href="{{ url_for('logout') }}">Quitter</a>
+      {% endif %}
     </div>
-
-    {% if current_user and not dev_bypass %}
-    <a class="logout-link" href="{{ url_for('logout') }}">Se déconnecter</a>
-    {% endif %}
-  </aside>
+  </header>
+  {% endif %}
 
   <main class="main-content">
     {% block content %}{% endblock %}
   </main>
+
+  <section class="chatbot-widget" data-chatbot-widget aria-live="polite">
+    <button class="chatbot-toggle" type="button" aria-label="Ouvrir l’assistant GreenBin" aria-expanded="false">
+      <span class="chatbot-toggle-icon">💬</span>
+      <span class="chatbot-pulse"></span>
+    </button>
+
+    <aside class="chatbot-panel" hidden>
+      <header class="chatbot-header">
+        <div>
+          <strong>Assistant GreenBin</strong>
+          <small>Réponses prédéfinies · JSON</small>
+        </div>
+        <button class="chatbot-close" type="button" aria-label="Fermer l’assistant">×</button>
+      </header>
+
+      <div class="chatbot-messages" data-chatbot-messages></div>
+
+      <div class="chatbot-quick-replies" data-chatbot-quick-replies></div>
+
+      <form class="chatbot-form" data-chatbot-form autocomplete="off">
+        <input data-chatbot-input type="text" placeholder="Ex. GPS, image, dashboard..." aria-label="Question pour l’assistant">
+        <button type="submit">Envoyer</button>
+      </form>
+    </aside>
+  </section>
+
+  <script>
+    window.GREENBIN_CHATBOT_RULES_URL = "{{ url_for('static', filename='data/chatbot_rules.json') }}";
+  </script>
+  <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 
   {% block scripts %}{% endblock %}
 </body>

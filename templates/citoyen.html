@@ -1,45 +1,74 @@
 {% extends "base.html" %}
-{% block title %}Signalement · GreenBin{% endblock %}
+{% block title %}Signalement citoyen · GreenBin{% endblock %}
 {% block map_assets %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/citizen-page-clean.css') }}">
 {% endblock %}
 {% block content %}
-<header class="page-header citizen-header">
-  <div>
-    <p class="section-label">Signalement citoyen</p>
-    <h1>Signaler une poubelle en moins d’une minute</h1>
-    <p class="header-subtitle">Ajoutez une photo, confirmez la position sur la carte, puis envoyez le signalement aux agents.</p>
-  </div>
-  <div class="status-pill">
-    <span class="pulse-dot"></span>
-    <div><strong id="citizenStatus">Prêt</strong><small>État du formulaire</small></div>
-  </div>
-</header>
+<form id="uploadForm" class="citizen-map-form" enctype="multipart/form-data">
+  <section class="citizen-map-stage" aria-label="Signalement citoyen sur carte">
+    <div id="citizenMap" class="leaflet-map citizen-map fullpage-map" aria-label="Carte de localisation du signalement"></div>
 
-<section class="workflow-steps" aria-label="Étapes du signalement">
-  <article><span>1</span><strong>Photo</strong><small>JPG, PNG ou WEBP</small></article>
-  <article><span>2</span><strong>Position</strong><small>GPS ou carte</small></article>
-  <article><span>3</span><strong>Envoi</strong><small>Analyse automatique</small></article>
-</section>
+    <header class="floating-page-title">
+      <p class="section-label">GreenBin · signalement citoyen</p>
+      <h1>Signalement citoyen</h1>
+      <p class="header-subtitle">Ensemble, gardons notre ville propre et durable.</p>
+    </header>
 
-<section class="citizen-layout">
-  <article class="panel report-panel">
-    <form id="uploadForm" class="report-form">
-      <div class="upload-map-grid">
-        <div class="upload-column">
-          <label class="camera-drop" for="imageInput">
-            <span class="camera-icon">📷</span>
-            <strong>Ajouter une photo</strong>
-            <small>Ouvrir l’appareil photo ou choisir une image · max 5 Mo</small>
-          </label>
-          <input id="imageInput" name="image" type="file" accept="image/*" capture="environment" hidden required>
-          <img id="preview" class="preview-img" alt="Aperçu image" hidden>
+    <aside class="gps-floating-card">
+      <p class="section-label">Emplacement GPS</p>
+      <h2 id="gpsAvailability">Recherche GPS…</h2>
+      <p id="gpsStatus" class="gps-coords">Coordonnées en attente</p>
+    </aside>
+
+    <label id="floatingUploadButton" class="floating-upload-button" for="imageInput" title="Choisir une image">
+      <span class="camera-icon" aria-hidden="true"></span>
+      <span>Ajouter une photo</span>
+    </label>
+
+    <input id="imageInput" name="image" type="file" accept="image/*" capture="environment" hidden required>
+
+    <section id="uploadPreviewPanel" class="floating-report-panel" hidden>
+      <div class="report-panel-grid">
+        <article class="image-preview-card">
+          <div class="panel-head compact">
+            <div>
+              <p class="section-label">Photo</p>
+              <h2>Image uploadée</h2>
+            </div>
+            <label class="mini-replace-button" for="imageInput">Changer</label>
+          </div>
+
+          <div class="preview-frame">
+            <img id="preview" class="preview-img" alt="Aperçu image" hidden>
+          </div>
 
           <div class="meta-grid">
-            <div class="meta-item"><small>GPS</small><strong id="gpsStatus">Recherche…</strong></div>
             <div class="meta-item"><small>Poids initial</small><strong id="sizeOriginal">--</strong></div>
             <div class="meta-item"><small>Optimisation</small><strong id="sizeOptimized">--</strong></div>
+            <div class="meta-item"><small>Analyse</small><strong>Automatique</strong></div>
           </div>
+        </article>
+
+        <article id="optionsCard" class="options-panel-card">
+          <div class="panel-head compact">
+            <div>
+              <p class="section-label">Précisions optionnelles</p>
+              <h2>Décrire la situation</h2>
+            </div>
+            <span class="mini-badge">Facultatif</span>
+          </div>
+
+          <textarea class="situation-input" placeholder="Décrivez la situation (ex. : bac plein, déchets au sol...)"></textarea>
+
+          <fieldset class="tag-box compact-tags">
+            <legend>Type de problème</legend>
+            <label><input type="checkbox" value="encombrants"> Encombrants</label>
+            <label><input type="checkbox" value="dangereux"> Dangereux</label>
+            <label><input type="checkbox" value="odeur"> Odeur</label>
+            <label><input type="checkbox" value="recyclage"> Recyclage</label>
+          </fieldset>
+
           <div id="qualityPanel" class="quality-panel neutral" aria-live="polite">
             <div>
               <strong>Contrôle qualité image</strong>
@@ -47,55 +76,18 @@
             </div>
             <ul id="qualityList"></ul>
           </div>
-
-        </div>
-
-        <section class="map-card citizen-map-card">
-          <div class="panel-head compact">
-            <div>
-              <h2>Localisation</h2>
-              <small id="mapHelp">Le point bleu indique votre position. Déplacez le marqueur vert si besoin.</small>
-            </div>
-            <span class="map-chip">Carte active</span>
-          </div>
-          <div id="citizenMap" class="leaflet-map citizen-map" aria-label="Carte de localisation du signalement"></div>
-        </section>
+        </article>
       </div>
 
-      <fieldset class="tag-box">
-        <legend>Précisions optionnelles</legend>
-        <label><input type="checkbox" value="encombrants"> Encombrants</label>
-        <label><input type="checkbox" value="dangereux"> Dangereux</label>
-        <label><input type="checkbox" value="odeur"> Odeur</label>
-        <label><input type="checkbox" value="recyclage"> Recyclage</label>
-      </fieldset>
-
-      <div class="action-row">
-        <button type="button" class="btn muted" id="resetButton">Réinitialiser</button>
-        <button type="submit" class="btn success" id="sendButton">Envoyer le signalement</button>
+      <div class="action-row citizen-actions floating-actions">
+        <button type="button" class="btn muted" id="resetButton">↻ Réinitialiser</button>
+        <button type="submit" class="btn success" id="sendButton">🌿 Signaler</button>
       </div>
-    </form>
-  </article>
+    </section>
+  </section>
+</form>
 
-  <aside class="panel project-card">
-    <span class="mini-badge">VISIO · WDP</span>
-    <h2>Ce que fait GreenBin</h2>
-    <p>Le backend Flask sauvegarde l’image, extrait les caractéristiques visuelles, applique des règles explicables et calcule un score de risque.</p>
-    <ul class="feature-list">
-      <li>Upload sécurisé et stockage local</li>
-      <li>Localisation GPS sur carte</li>
-      <li>Classification Vide / Pleine</li>
-      <li>Score de risque pour prioriser</li>
-    </ul>
-    {% if current_user and current_user.role in ['agent', 'admin'] %}
-    <a class="btn ghost full" href="{{ url_for('agent_app') }}">Voir la modération</a>
-    {% else %}
-    <a class="btn ghost full" href="{{ url_for('login') }}">Connexion agent</a>
-    {% endif %}
-  </aside>
-</section>
-
-<section id="resultCard" class="panel result-card" hidden>
+<section id="resultCard" class="glass-card result-card floating-result" hidden>
   <h2>Signalement transmis</h2>
   <div id="resultContent" class="result-grid"></div>
   {% if current_user and current_user.role in ['agent', 'admin'] %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Parcours optimisé · GreenBin{% endblock %}
+{% block map_assets %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="section-label">Collecte terrain</p>
+    <h1>Parcours optimisé</h1>
+    <p class="header-subtitle">Génère une proposition de tournée à partir des poubelles pleines, critiques ou hors emplacement.</p>
+  </div>
+  <button id="refreshRouteButton" class="btn success small">Recalculer</button>
+</header>
+
+<section class="route-layout">
+  <article class="panel route-map-card">
+    <div class="panel-head compact">
+      <div>
+        <h2>Carte de tournée</h2>
+        <small>Le parcours utilise une heuristique du plus proche voisin, pondérée par la priorité.</small>
+      </div>
+      <span id="routeSummary" class="mini-badge">Chargement…</span>
+    </div>
+    <div id="routeMap" class="leaflet-map dashboard-map"></div>
+  </article>
+
+  <aside class="panel route-list-card">
+    <div class="panel-head compact">
+      <div>
+        <h2>Ordre de passage</h2>
+        <small>Les points collectés disparaissent automatiquement de la tournée.</small>
+      </div>
+    </div>
+    <div id="routeStops" class="route-stops"></div>
+  </aside>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/route_planning.js') }}"></script>
+{% endblock %}

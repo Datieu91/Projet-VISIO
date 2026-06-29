@@ -1,5 +1,9 @@
-def calculate_risk_score(prediction, confidence, tags, features):
+def calculate_risk_score(prediction, confidence, tags, features, thresholds=None):
     """Calculate a risk score from 0 to 100 and return score, level and explanation."""
+    thresholds = thresholds or {}
+    medium_threshold = int(thresholds.get("risk_medium_threshold", 30))
+    high_threshold = int(thresholds.get("risk_high_threshold", 70))
+
     score = 0
     explanations = []
     tags_text = (tags or "").lower()
@@ -39,9 +43,9 @@ def calculate_risk_score(prediction, confidence, tags, features):
 
     score = min(score, 100)
 
-    if score < 30:
+    if score < medium_threshold:
         level = "Faible"
-    elif score < 70:
+    elif score < high_threshold:
         level = "Moyen"
     else:
         level = "Élevé"

@@ -6,20 +6,18 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
 os.chdir(ROOT_DIR)
 
-from app import app
+from app import app, seed_default_settings, seed_default_bin_locations
 from database import db
-from models import ImageReport
 from config import DB_PATH, UPLOAD_FOLDER
 
 
 def main():
     with app.app_context():
-        ImageReport.query.delete()
-        db.session.commit()
         db.drop_all()
         db.create_all()
+        seed_default_settings()
+        seed_default_bin_locations()
 
-    # Supprime uniquement les images uploadées par l'application, garde le dossier.
     Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
     for item in Path(UPLOAD_FOLDER).iterdir():
         if item.name == ".gitkeep":

@@ -11,6 +11,10 @@ const aiBadge = document.getElementById("aiBadge");
 const aiText = document.getElementById("aiText");
 const recentAnnotations = document.getElementById("recentAnnotations");
 const refreshRecentButton = document.getElementById("refreshRecentButton");
+const refreshPrioritiesButton = document.getElementById("refreshPrioritiesButton");
+const refreshActivityButton = document.getElementById("refreshActivityButton");
+const agentPriorities = document.getElementById("agentPriorities");
+const agentActivity = document.getElementById("agentActivity");
 
 const detailId = document.getElementById("detailId");
 const detailLocation = document.getElementById("detailLocation");
@@ -72,7 +76,7 @@ function renderCurrent() {
   agentImage.hidden = false;
   aiBadge.hidden = false;
   agentImage.src = report.image_url;
-  aiText.textContent = `Prédiction : ${report.ai_prediction || "--"} · ${report.ai_confidence ?? "--"}%`;
+  aiText.textContent = `${report.is_priority ? "🔥 Prioritaire · " : ""}Prédiction : ${report.ai_prediction || "--"} · ${report.ai_confidence ?? "--"}%`;
 
   detailId.textContent = `#${report.id}`;
   detailLocation.textContent = report.lat && report.lng ? `${Number(report.lat).toFixed(5)}, ${Number(report.lng).toFixed(5)}` : "--";
@@ -167,6 +171,8 @@ async function annotate(annotation, animationClass = "swipe-up") {
     if (currentIndex >= pendingReports.length) currentIndex = 0;
     renderCurrent();
     loadRecentAnnotations();
+    loadPriorities();
+    loadActivity();
   }, 250);
 }
 
@@ -179,6 +185,8 @@ async function editAnnotation(reportId, annotation) {
     });
     await loadRecentAnnotations();
     await loadPending();
+    await loadPriorities();
+    await loadActivity();
   } catch (error) {
     alert(error.message);
   }
@@ -193,8 +201,92 @@ async function resetAnnotation(reportId) {
     currentIndex = 0;
     renderCurrent();
     await loadRecentAnnotations();
+    await loadPriorities();
+    await loadActivity();
   } catch (error) {
     alert(error.message);
+  }
+}
+
+
+function renderPriorities(payload) {
+  if (!agentPriorities) return;
+  const high = payload.high_risk_pending || [];
+  const zones = payload.recurring_zones || [];
+  const conformity = payload.conformity_alerts || [];
+
+  if (!high.length && !zones.length && !conformity.length) {
+    agentPriorities.innerHTML = `<p class="muted-note">Aucune alerte prioritaire pour le moment.</p>`;
+    return;
+  }
+
+  const highHtml = high.map((report) => `
+    <article class="priority-item high">
+      <strong>#${report.id} · ${report.risk_score || 0}/100</strong>
+      <small>${report.timestamp} · ${report.ai_prediction || "--"} · ${report.citizen_tags || "sans tag"}</small>
+    </article>
+  `).join("");
+
+  const zoneHtml = zones.map((zone) => `
+    <article class="priority-item zone">
+      <strong>Zone ${zone.lat}, ${zone.lng}</strong>
+      <small>${zone.count} signalements · ${zone.full_count} pleines · risque moyen ${zone.avg_risk}/100</small>
+    </article>
+  `).join("");
+
+  const conformityHtml = conformity.map((report) => `
+    <article class="priority-item conformity">
+      <strong>#${report.id} · conformité</strong>
+      <small>${(report.issues || []).map((issue) => issue.label).join(" · ")}</small>
+    </article>
+  `).join("");
+
+  agentPriorities.innerHTML = `
+    ${highHtml ? `<h3>Risque élevé</h3>${highHtml}` : ""}
+    ${zoneHtml ? `<h3>Zones récurrentes</h3>${zoneHtml}` : ""}
+    ${conformityHtml ? `<h3>Données à vérifier</h3>${conformityHtml}` : ""}
+  `;
+}
+
+async function loadPriorities() {
+  if (!agentPriorities) return;
+  try {
+    const payload = await fetchJson("/api/agent-priorities");
+    renderPriorities(payload);
+  } catch (error) {
+    agentPriorities.innerHTML = `<p class="muted-note">${error.message}</p>`;
+  }
+}
+
+function renderActivity(activities) {
+  if (!agentActivity) return;
+  if (!activities.length) {
+    agentActivity.innerHTML = `<p class="muted-note">Aucune activité récente.</p>`;
+    return;
+  }
+
+  const actionLabels = {
+    validate: "Validation",
+    correct: "Correction",
+    ignore: "Signalement ignoré",
+    reset: "Annulation"
+  };
+
+  agentActivity.innerHTML = activities.map((activity) => `
+    <article class="activity-item">
+      <strong>${actionLabels[activity.action] || activity.action} · #${activity.report_id}</strong>
+      <small>${activity.timestamp} · ${activity.username} · ${activity.old_annotation || "--"} → ${activity.new_annotation || "--"}</small>
+    </article>
+  `).join("");
+}
+
+async function loadActivity() {
+  if (!agentActivity) return;
+  try {
+    const activities = await fetchJson("/api/activity/recent?limit=10");
+    renderActivity(activities);
+  } catch (error) {
+    agentActivity.innerHTML = `<p class="muted-note">${error.message}</p>`;
   }
 }
 
@@ -220,6 +312,8 @@ if (recentAnnotations) {
 }
 
 if (refreshRecentButton) refreshRecentButton.addEventListener("click", loadRecentAnnotations);
+if (refreshPrioritiesButton) refreshPrioritiesButton.addEventListener("click", loadPriorities);
+if (refreshActivityButton) refreshActivityButton.addEventListener("click", loadActivity);
 
 document.addEventListener("keydown", (event) => {
   if (event.repeat) return;
@@ -233,3 +327,5 @@ document.addEventListener("keydown", (event) => {
 
 loadPending();
 loadRecentAnnotations();
+loadPriorities();
+loadActivity();

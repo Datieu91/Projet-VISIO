@@ -20,9 +20,11 @@ const canvas = document.getElementById("signalementsChart");
 const filterForm = document.getElementById("dashboardFilters");
 const resetFiltersButton = document.getElementById("resetFiltersButton");
 const exportCsvButton = document.getElementById("exportCsvButton");
+const heatmapToggle = document.getElementById("heatmapToggle");
 
 let dashboardMap = null;
 let markerLayer = null;
+let heatLayer = null;
 let canvasRenderer = null;
 
 const defaultMapCenter = [48.8566, 2.3522];
@@ -33,7 +35,7 @@ const emptySeries = {
 };
 
 function createTileLayer() {
-  return L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  return L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
     maxZoom: 19,
     minZoom: 4,
     updateWhenIdle: true,
@@ -156,12 +158,11 @@ function drawChart(series) {
   const labels = series.labels;
 
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#111a2d";
-  ctx.fillRect(0, 0, width, height);
+  ctx.clearRect(0, 0, width, height);
 
-  ctx.strokeStyle = "rgba(148, 163, 184, 0.16)";
+  ctx.strokeStyle = "rgba(30, 167, 255, 0.16)";
   ctx.lineWidth = 1;
-  ctx.fillStyle = "#93a0b5";
+  ctx.fillStyle = "#5b7895";
   ctx.font = "12px Inter, Segoe UI, Arial";
 
   for (let i = 0; i <= 5; i += 1) {
@@ -188,8 +189,8 @@ function drawChart(series) {
     y: padding.top + chartHeight - (value / maxValue) * chartHeight
   }));
 
-  drawSmoothLine(ctx, toPoints(series.empty), "#16a34a", "rgba(22, 163, 74, 0.12)");
-  drawSmoothLine(ctx, toPoints(series.full), "#e11d48", "rgba(225, 29, 72, 0.18)");
+  drawSmoothLine(ctx, toPoints(series.empty), "#22c55e", "rgba(34, 197, 94, 0.16)");
+  drawSmoothLine(ctx, toPoints(series.full), "#ef3b55", "rgba(239, 59, 85, 0.16)");
 }
 
 function markerStyle(report) {
@@ -217,6 +218,36 @@ function initDashboardMap() {
   L.control.zoom({ position: "bottomright" }).addTo(dashboardMap);
   markerLayer = L.layerGroup().addTo(dashboardMap);
   setTimeout(() => dashboardMap.invalidateSize(), 250);
+}
+
+function updateHeatmap(reports) {
+  if (!dashboardMap || typeof L === "undefined" || typeof L.heatLayer !== "function") return;
+  if (heatLayer) {
+    dashboardMap.removeLayer(heatLayer);
+    heatLayer = null;
+  }
+
+  if (heatmapToggle && !heatmapToggle.checked) return;
+
+  const heatPoints = reports
+    .filter((report) => report.lat !== null && report.lng !== null)
+    .map((report) => [Number(report.lat), Number(report.lng), Math.max(0.12, Math.min((Number(report.risk_score) || 0) / 100, 1))])
+    .filter((point) => !Number.isNaN(point[0]) && !Number.isNaN(point[1]));
+
+  if (!heatPoints.length) return;
+
+  heatLayer = L.heatLayer(heatPoints, {
+    radius: 34,
+    blur: 24,
+    maxZoom: 17,
+    minOpacity: 0.22,
+    gradient: {
+      0.2: "#22c55e",
+      0.45: "#f59e0b",
+      0.75: "#ef4444",
+      1.0: "#7f1d1d"
+    }
+  }).addTo(dashboardMap);
 }
 
 function updateDashboardMap(reports) {
@@ -255,8 +286,11 @@ function updateDashboardMap(reports) {
             <span>Agent</span><strong>${report.agent_annotation || "--"}</strong>
             <span>IA</span><strong>${report.ai_prediction || "--"} ${report.ai_confidence ? `(${report.ai_confidence}%)` : ""}</strong>
             <span>Risque</span><strong>${report.risk_score ?? 0}/100 · ${report.risk_level || "--"}</strong>
+            <span>Priorité</span><strong>${report.priority_level || "--"}</strong>
+            <span>Emplacement</span><strong>${report.location_type === "wild_dump" ? "Dépôt sauvage" : (report.bin_location_name || "Non rattaché")}</strong>
             <span>Tags</span><strong>${report.citizen_tags || "--"}</strong>
           </div>
+          <button class="btn success small" data-dashboard-collect="${report.id}" type="button">Marquer collecté</button>
           <img src="${report.image_url}" alt="Signalement ${report.id}" class="popup-img" loading="lazy">
         </div>
       `)
@@ -268,6 +302,8 @@ function updateDashboardMap(reports) {
   } else if (bounds.length > 1) {
     dashboardMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 16 });
   }
+
+  updateHeatmap(geolocatedReports);
 }
 
 function renderReportsTable(reports) {
@@ -283,6 +319,22 @@ function renderReportsTable(reports) {
     </tr>
   `).join("") || `<tr><td colspan="7">Aucun signalement ne correspond aux filtres.</td></tr>`;
 }
+
+
+async function collectFromDashboard(reportId) {
+  const response = await fetch(`/api/images/${reportId}/collect`, { method: "POST" });
+  if (!response.ok) {
+    alert("Impossible de marquer ce signalement comme collecté.");
+    return;
+  }
+  loadDashboard();
+}
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-dashboard-collect]");
+  if (!button) return;
+  collectFromDashboard(button.dataset.dashboardCollect);
+});
 
 async function loadDashboard() {
   syncExportLink();
@@ -325,6 +377,7 @@ async function loadDashboard() {
 initDashboardMap();
 if (refreshButton) refreshButton.addEventListener("click", loadDashboard);
 if (refreshMapButton) refreshMapButton.addEventListener("click", loadDashboard);
+if (heatmapToggle) heatmapToggle.addEventListener("change", loadDashboard);
 if (filterForm) {
   filterForm.addEventListener("submit", (event) => {
     event.preventDefault();

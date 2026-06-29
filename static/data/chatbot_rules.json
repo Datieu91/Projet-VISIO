@@ -1,0 +1,256 @@
+{
+  "fallback": {
+    "answer": "Je n’ai pas de réponse exacte pour cette question. Essaie avec un mot-clé comme : signalement, GPS, image, modération, dashboard, parcours, poubelles ou collecte.",
+    "quick_replies": [
+      "Créer un signalement",
+      "Problème GPS",
+      "Parcours optimisé",
+      "Marquer collecté"
+    ]
+  },
+  "welcome": {
+    "answer": "Bonjour ! Je suis l’assistant GreenBin. Je peux t’aider à utiliser le prototype : signalement, GPS, upload image, modération, dashboard, parcours de collecte et poubelles prédéfinies.",
+    "quick_replies": [
+      "Créer un signalement",
+      "Problème GPS",
+      "Modération agent",
+      "Dashboard",
+      "Parcours optimisé"
+    ]
+  },
+  "rules": [
+    {
+      "id": "signalement",
+      "keywords": [
+        "signalement",
+        "signaler",
+        "citoyen",
+        "formulaire",
+        "envoyer",
+        "photo"
+      ],
+      "answer": "Pour créer un signalement : va sur la page Signalement, accepte la géolocalisation si possible, ajoute une photo, complète les précisions optionnelles puis clique sur Signaler.",
+      "quick_replies": [
+        "Problème GPS",
+        "Upload image",
+        "Dépôt sauvage"
+      ]
+    },
+    {
+      "id": "gps",
+      "keywords": [
+        "gps",
+        "position",
+        "localisation",
+        "coordonnées",
+        "carte",
+        "geolocalisation",
+        "géolocalisation"
+      ],
+      "answer": "Le GPS sert à positionner le signalement sur la carte. Si le navigateur refuse la localisation, le marqueur reste déplaçable manuellement. Tu peux donc ajuster l’emplacement directement sur la carte.",
+      "quick_replies": [
+        "Créer un signalement",
+        "Dépôt sauvage",
+        "Poubelles prédéfinies"
+      ]
+    },
+    {
+      "id": "image",
+      "keywords": [
+        "image",
+        "photo",
+        "upload",
+        "taille",
+        "flou",
+        "qualité",
+        "luminosité",
+        "format"
+      ],
+      "answer": "L’image est contrôlée avant envoi : format autorisé, taille maximale, dimensions, luminosité et flou approximatif. Si elle est trop petite ou de mauvaise qualité, le serveur peut la refuser.",
+      "quick_replies": [
+        "Créer un signalement",
+        "Modération agent"
+      ]
+    },
+    {
+      "id": "moderation",
+      "keywords": [
+        "modération",
+        "moderation",
+        "agent",
+        "valider",
+        "pleine",
+        "vide",
+        "annotation",
+        "annuler",
+        "corriger"
+      ],
+      "answer": "Dans l’espace Modération, un agent valide chaque image en Vide ou Pleine. Il peut aussi corriger une décision ou annuler une annotation pour remettre le signalement en attente.",
+      "quick_replies": [
+        "Dashboard",
+        "Marquer collecté",
+        "Journal activité"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "keywords": [
+        "dashboard",
+        "statistique",
+        "stats",
+        "filtre",
+        "csv",
+        "export",
+        "heatmap",
+        "carte opérationnelle"
+      ],
+      "answer": "Le dashboard sert au pilotage : KPI, filtres, export CSV, carte opérationnelle et heatmap. Par défaut, la carte opérationnelle affiche surtout les poubelles pleines, critiques ou à traiter.",
+      "quick_replies": [
+        "Parcours optimisé",
+        "Poubelles prédéfinies",
+        "Export CSV"
+      ]
+    },
+    {
+      "id": "route",
+      "keywords": [
+        "parcours",
+        "route",
+        "tournée",
+        "tournee",
+        "optimisé",
+        "optimise",
+        "éboueur",
+        "eboueur",
+        "collecte",
+        "itinéraire",
+        "itineraire"
+      ],
+      "answer": "La page Parcours propose une tournée pour les agents. Elle prend les points à traiter et les ordonne avec une heuristique simple du plus proche voisin, pondérée par la priorité.",
+      "quick_replies": [
+        "Marquer collecté",
+        "Poubelles prédéfinies",
+        "Dashboard"
+      ]
+    },
+    {
+      "id": "collecte",
+      "keywords": [
+        "collecté",
+        "collecte",
+        "collecter",
+        "ramassé",
+        "ramasse",
+        "terminé",
+        "traité",
+        "traite"
+      ],
+      "answer": "Quand un agent clique sur Marquer comme collecté, le signalement passe en statut Collected. Il disparaît alors de la carte opérationnelle et du parcours de collecte.",
+      "quick_replies": [
+        "Parcours optimisé",
+        "Historique poubelle"
+      ]
+    },
+    {
+      "id": "bins",
+      "keywords": [
+        "poubelle prédéfinie",
+        "poubelles prédéfinies",
+        "emplacement",
+        "officiel",
+        "bin",
+        "historique",
+        "référentiel",
+        "referentiel"
+      ],
+      "answer": "Les emplacements prédéfinis représentent les poubelles officielles. Ils permettent de rattacher un signalement à une poubelle connue et de consulter l’historique par poubelle.",
+      "quick_replies": [
+        "Dépôt sauvage",
+        "Historique poubelle",
+        "Parcours optimisé"
+      ]
+    },
+    {
+      "id": "wild_dump",
+      "keywords": [
+        "dépôt sauvage",
+        "depot sauvage",
+        "hors emplacement",
+        "pas à sa place",
+        "poubelle déplacée",
+        "sauvage"
+      ],
+      "answer": "Si un signalement est trop éloigné d’un emplacement officiel, il est considéré comme dépôt sauvage ou hors emplacement. Sa priorité augmente automatiquement.",
+      "quick_replies": [
+        "Poubelles prédéfinies",
+        "Dashboard"
+      ]
+    },
+    {
+      "id": "login",
+      "keywords": [
+        "connexion",
+        "login",
+        "compte",
+        "mot de passe",
+        "agent123",
+        "admin123",
+        "role",
+        "rôle"
+      ],
+      "answer": "Comptes de test : agent / agent123 pour l’espace agent, admin / admin123 pour le dashboard, les paramètres et les pages administrateur.",
+      "quick_replies": [
+        "Modération agent",
+        "Dashboard"
+      ]
+    },
+    {
+      "id": "conformity",
+      "keywords": [
+        "conformité",
+        "conformite",
+        "erreur",
+        "doublon",
+        "incomplet",
+        "gps manquant",
+        "annotation manquante"
+      ],
+      "answer": "Le module Conformité détecte les signalements incomplets : GPS manquant, image invalide, annotation manquante, fichier absent ou doublon possible.",
+      "quick_replies": [
+        "Dashboard",
+        "Modération agent"
+      ]
+    },
+    {
+      "id": "settings",
+      "keywords": [
+        "paramètres",
+        "parametres",
+        "seuil",
+        "règle",
+        "regle",
+        "configuration",
+        "score"
+      ],
+      "answer": "La page Paramètres centralise les seuils : qualité image, score de risque, distance maximale avec une poubelle officielle, nombre de points carte et départ de tournée.",
+      "quick_replies": [
+        "Dashboard",
+        "Parcours optimisé"
+      ]
+    },
+    {
+      "id": "export",
+      "keywords": [
+        "export",
+        "csv",
+        "fichier",
+        "données",
+        "donnees"
+      ],
+      "answer": "L’export CSV se fait depuis le dashboard. Il exporte les signalements avec leurs statuts, scores, coordonnées, conformité et informations opérationnelles.",
+      "quick_replies": [
+        "Dashboard"
+      ]
+    }
+  ]
+}

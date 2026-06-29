@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Paramètres · GreenBin{% endblock %}
+{% block content %}
+<header class="page-header dashboard-header">
+  <div>
+    <p class="section-label">Administration</p>
+    <h1>Seuils et paramètres</h1>
+    <p class="header-subtitle">Centralisez les seuils de qualité, classification, scoring et performance carte sans modifier le code.</p>
+  </div>
+</header>
+
+{% if saved %}
+<section class="notice success-notice">Paramètres enregistrés avec succès.</section>
+{% endif %}
+
+<form method="POST" class="settings-form">
+  {% for category, settings in grouped_settings.items() %}
+  <section class="panel settings-panel">
+    <div class="panel-head compact">
+      <div>
+        <p class="section-label">{{ category }}</p>
+        <h2>{{ category }}</h2>
+      </div>
+    </div>
+    <div class="settings-grid">
+      {% for setting in settings %}
+      <label class="setting-field">
+        <span>{{ setting.label }}</span>
+        <input type="number" name="{{ setting.key }}" value="{{ setting.value }}" step="1">
+        <small>{{ setting.description }}</small>
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  <div class="sticky-actions">
+    <button class="btn success" type="submit">Enregistrer les paramètres</button>
+    <a class="btn muted" href="{{ url_for('dashboard_app') }}">Retour dashboard</a>
+  </div>
+</form>
+{% endblock %}
